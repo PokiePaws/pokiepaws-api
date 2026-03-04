@@ -1,0 +1,34 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: pokiepaws-db
+    environment:
+      POSTGRES_DB: pokiepaws
+      POSTGRES_USER: pokiepaws
+      POSTGRES_PASSWORD: pokiepaws0303
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pokiepaws"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    container_name: pokiepaws-api
+    ports:
+      - "9090:9090"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pokiepaws
+      SPRING_DATASOURCE_USERNAME: pokiepaws
+      SPRING_DATASOURCE_PASSWORD: pokiepaws0303
+      SERVER_PORT: 9090
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:
