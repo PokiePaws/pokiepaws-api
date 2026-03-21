@@ -28,6 +28,9 @@ public class User {
     @Column(nullable = false)
     private String lastName;
 
+    @Column
+    private String phoneNumber;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;

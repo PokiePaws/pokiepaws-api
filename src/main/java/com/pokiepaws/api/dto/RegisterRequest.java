@@ -19,4 +19,7 @@ public class RegisterRequest {
 
     @NotBlank
     private String lastName;
+
+    @NotBlank
+    private String phoneNumber;
 }
