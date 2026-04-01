@@ -3,38 +3,61 @@ services:
     image: postgres:16
     container_name: pokiepaws-db
     environment:
-      POSTGRES_DB: pokiepaws
-      POSTGRES_USER: pokiepaws
-      POSTGRES_PASSWORD: pokiepaws0303
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT}:${POSTGRES_PORT}"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pokiepaws"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    networks:
+      - pokiepaws-net
 
   app:
     build: .
     container_name: pokiepaws-api
     ports:
-      - "9090:9090"
+      - "${APP_PORT}:${APP_PORT}"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/pokiepaws
-      SPRING_DATASOURCE_USERNAME: pokiepaws
-      SPRING_DATASOURCE_PASSWORD: pokiepaws0303
-      SERVER_PORT: 9090
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      SERVER_PORT: ${SERVER_PORT}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAILPIT_SMTP_PORT: ${MAILPIT_SMTP_PORT}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION: ${JWT_EXPIRATION}
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      ADMIN_FIRST_NAME: ${ADMIN_FIRST_NAME}
+      ADMIN_LAST_NAME: ${ADMIN_LAST_NAME}
+      BASE_URL: ${BASE_URL}
+      FRONTEND_URL: ${FRONTEND_URL}
     depends_on:
       postgres:
         condition: service_healthy
+    networks:
+      - pokiepaws-net
+
   mailpit:
     image: axllent/mailpit
     container_name: pokiepaws-mail
     ports:
-      - "8025:8025"
-      - "1025:1025"
+      - "${MAILPIT_DASHBOARD_PORT}:${MAILPIT_DASHBOARD_PORT}"
+      - "${MAILPIT_SMTP_PORT}:${MAILPIT_SMTP_PORT}"
     restart: unless-stopped
+    networks:
+      - pokiepaws-net
+
+networks:
+  pokiepaws-net:
+    driver: bridge
+
 volumes:
   postgres_data:
