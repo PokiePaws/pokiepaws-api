@@ -1,5 +1,6 @@
 package com.pokiepaws.api.config;
 
+import org.springframework.http.HttpMethod;
 import com.pokiepaws.api.security.JwtAuthFilter;
 import com.pokiepaws.api.security.UserDetailsServiceImpl;
 import lombok.RequiredArgsConstructor;

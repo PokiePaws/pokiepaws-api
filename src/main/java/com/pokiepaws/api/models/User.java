@@ -16,12 +16,6 @@ public class User {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String email;
-
-    @Column(nullable = false)
-    private String password;
-
     @Column(nullable = false)
     private String firstName;
 
@@ -30,6 +24,30 @@ public class User {
 
     @Column
     private String phoneNumber;
+
+    @Column
+    private String street;
+
+    @Column
+    private String houseNumber;
+
+    @Column
+    private String apartmentNumber;
+
+    @Column
+    private String city;
+
+    @Column
+    private String postalCode;
+
+    @Column
+    private String country;
+
+    @Column(nullable = false, unique = true)
+    private String email;
+
+    @Column(nullable = false)
+    private String password;
 
     @Column(nullable = false)
     private boolean emailVerified = false;
