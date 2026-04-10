@@ -42,10 +42,6 @@ public class AuthService {
     @Value("${app.base-url}")
     private String baseUrl;
 
-    /**
-     * Rejestruje użytkownika, ale NIE loguje go automatycznie.
-     * Wymaga potwierdzenia adresu e-mail przed pierwszym logowaniem.
-     */
     public void register(RegisterRequest request) {
         if (userRepository.existsByEmail(request.getEmail())) {
             throw new RuntimeException("Email already in use");
@@ -64,13 +60,12 @@ public class AuthService {
                 .role(Role.OWNER)
                 .email(request.getEmail())
                 .password(passwordEncoder.encode(request.getPassword()))
-                .emailVerified(false) // Użytkownik niezweryfikowany
+                .emailVerified(false)
                 .active(true)
                 .build();
 
         userRepository.save(user);
 
-        // Generowanie tokena weryfikacyjnego
         String verificationToken = UUID.randomUUID().toString();
         EmailVerificationToken emailToken = EmailVerificationToken.builder()
                 .token(verificationToken)
@@ -80,23 +75,16 @@ public class AuthService {
                 .build();
         tokenRepository.save(emailToken);
 
-        // Wysyłka maila
         emailService.sendVerificationEmail(user.getEmail(), verificationToken, baseUrl);
     }
 
-    /**
-     * Loguje użytkownika tylko wtedy, gdy jego e-mail jest zweryfikowany.
-     */
     public AuthResponse login(AuthRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
-        // Sprawdzenie czy e-mail został potwierdzony
         if (!user.isEmailVerified()) {
-            throw new RuntimeException("Proszę najpierw potwierdzić adres e-mail.");
+            throw new RuntimeException("Please verify your email address first.");
         }
-
-        // Autentykacja Spring Security
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         request.getEmail(),
