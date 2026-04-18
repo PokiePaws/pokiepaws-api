@@ -6,13 +6,16 @@ import com.pokiepaws.api.dto.RegisterRequest;
 import com.pokiepaws.api.dto.ResetPasswordRequest;
 import com.pokiepaws.api.models.EmailVerificationToken;
 import com.pokiepaws.api.models.ForgotPasswordToken;
+import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
 import com.pokiepaws.api.repositories.ForgotPasswordTokenRepository;
+import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.security.JwtService;
 import java.security.SecureRandom;
+import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.Locale;
@@ -53,7 +56,10 @@ public class AuthService {
   private static final String PASSWORD_MUST_NOT_CONTAIN_EMAIL =
       "The password must not contain an email address";
 
+  private final Clock clock;
   private final UserRepository userRepository;
+  private final OwnerRepository ownerRepository;
+
   private final PasswordEncoder passwordEncoder;
   private final JwtService jwtService;
   private final AuthenticationManager authenticationManager;
@@ -64,16 +70,26 @@ public class AuthService {
   @Value("${app.base-url}")
   private String baseUrl;
 
+  @Transactional
   public void register(RegisterRequest request) {
     if (userRepository.existsByEmail(request.getEmail())) {
       throw new ResponseStatusException(HttpStatus.CONFLICT, EMAIL_ALREADY_IN_USE);
     }
 
-    // WALIDACJA HASŁA PRZY REJESTRACJI (taka sama jak przy zmianie hasła)
-    validatePasswordPolicy(request.getPassword(), request.getEmail());
-
     User user =
         User.builder()
+            .role(Role.OWNER)
+            .email(request.getEmail())
+            .password(passwordEncoder.encode(request.getPassword()))
+            .emailVerified(false)
+            .active(true)
+            .build();
+
+    user = userRepository.save(user);
+
+    Owner owner =
+        Owner.builder()
+            .user(user)
             .firstName(request.getFirstName())
             .lastName(request.getLastName())
             .phoneNumber(request.getPhoneNumber())
@@ -83,21 +99,15 @@ public class AuthService {
             .city(request.getCity())
             .postalCode(request.getPostalCode())
             .country(request.getCountry())
-            .role(Role.OWNER)
-            .email(request.getEmail())
-            .password(passwordEncoder.encode(request.getPassword()))
-            .emailVerified(false)
-            .active(true)
             .build();
 
-    userRepository.save(user);
-
+    ownerRepository.save(owner);
     String verificationToken = UUID.randomUUID().toString();
     EmailVerificationToken emailToken =
         EmailVerificationToken.builder()
             .token(verificationToken)
             .user(user)
-            .expiresAt(LocalDateTime.now().plusHours(24))
+            .expiresAt(LocalDateTime.now(clock).plusHours(24))
             .used(false)
             .build();
     tokenRepository.save(emailToken);
@@ -128,6 +138,7 @@ public class AuthService {
     return new AuthResponse(token, user.getEmail(), user.getRole().name());
   }
 
+  @Transactional
   public String verifyEmail(String token) {
     EmailVerificationToken verificationToken =
         tokenRepository
@@ -138,7 +149,7 @@ public class AuthService {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, TOKEN_ALREADY_USED);
     }
 
-    if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now())) {
+    if (verificationToken.getExpiresAt().isBefore(LocalDateTime.now(clock))) {
       throw new ResponseStatusException(HttpStatus.BAD_REQUEST, TOKEN_EXPIRED);
     }
 
@@ -165,7 +176,7 @@ public class AuthService {
                   ForgotPasswordToken.builder()
                       .tokenHash(passwordEncoder.encode(plainToken))
                       .user(user)
-                      .expiresAt(LocalDateTime.now().plusMinutes(15))
+                      .expiresAt(LocalDateTime.now(clock).plusMinutes(15))
                       .used(false)
                       .build();
 
@@ -177,7 +188,7 @@ public class AuthService {
   @Transactional(readOnly = true)
   public boolean validateResetToken(String plainToken) {
     return forgotPasswordTokenRepository
-        .findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now())
+        .findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now(clock))
         .stream()
         .anyMatch(t -> passwordEncoder.matches(plainToken, t.getTokenHash()));
   }
@@ -186,7 +197,7 @@ public class AuthService {
   public void resetPassword(ResetPasswordRequest request) {
     ForgotPasswordToken resetToken =
         forgotPasswordTokenRepository
-            .findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now())
+            .findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now(clock))
             .stream()
             .filter(t -> passwordEncoder.matches(request.getToken(), t.getTokenHash()))
             .findFirst()
@@ -196,8 +207,6 @@ public class AuthService {
                         HttpStatus.BAD_REQUEST, RESET_TOKEN_INVALID_OR_EXPIRED));
 
     User user = resetToken.getUser();
-
-    // WALIDACJA HASŁA PRZY ZMIANIE
     validatePasswordPolicy(request.getNewPassword(), user.getEmail());
 
     user.setPassword(passwordEncoder.encode(request.getNewPassword()));

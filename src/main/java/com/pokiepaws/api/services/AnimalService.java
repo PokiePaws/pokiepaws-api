@@ -3,9 +3,9 @@ package com.pokiepaws.api.services;
 import com.pokiepaws.api.dto.AnimalRequest;
 import com.pokiepaws.api.dto.AnimalResponse;
 import com.pokiepaws.api.models.Animal;
-import com.pokiepaws.api.models.User;
+import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.repositories.AnimalRepository;
-import com.pokiepaws.api.repositories.UserRepository;
+import com.pokiepaws.api.repositories.OwnerRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,9 +23,9 @@ public class AnimalService {
   private static final String ANIMAL_NOT_FOUND = "Animal not found";
 
   private final AnimalRepository animalRepository;
-  private final UserRepository userRepository;
+  private final OwnerRepository ownerRepository;
 
-  private User getCurrentUser() {
+  private Owner getCurrentOwner() {
     var auth = SecurityContextHolder.getContext().getAuthentication();
 
     if (log.isDebugEnabled()) {
@@ -40,14 +40,19 @@ public class AnimalService {
     }
 
     String email = auth.getName();
-    return userRepository
-        .findByEmail(email)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+
+    return ownerRepository
+        .findByUserEmail(email)
+        .orElseThrow(
+            () ->
+                new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Owner profile not found for this account (role mismatch?)"));
   }
 
   @Transactional(readOnly = true)
   public List<AnimalResponse> getMyAnimals() {
-    return animalRepository.findAllByOwnerAndActiveTrue(getCurrentUser()).stream()
+    return animalRepository.findAllByOwnerAndActiveTrue(getCurrentOwner()).stream()
         .map(this::toResponse)
         .toList();
   }
@@ -56,14 +61,14 @@ public class AnimalService {
   public AnimalResponse getAnimal(Long id) {
     Animal animal =
         animalRepository
-            .findByIdAndOwnerAndActiveTrue(id, getCurrentUser())
+            .findByIdAndOwnerAndActiveTrue(id, getCurrentOwner())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND));
     return toResponse(animal);
   }
 
   @Transactional(readOnly = true)
   public List<AnimalResponse> getAnimalsByOwner(Long ownerId) {
-    return animalRepository.findAllByOwnerIdAndActiveTrue(ownerId).stream()
+    return animalRepository.findAllByOwnerUserIdAndActiveTrue(ownerId).stream()
         .map(this::toResponse)
         .toList();
   }
@@ -84,7 +89,7 @@ public class AnimalService {
             .weight(request.getWeight())
             .birthDate(request.getBirthDate())
             .notes(request.getNotes())
-            .owner(getCurrentUser())
+            .owner(getCurrentOwner())
             .active(true)
             .build();
 
@@ -95,7 +100,7 @@ public class AnimalService {
   public AnimalResponse updateAnimal(Long id, AnimalRequest request) {
     Animal animal =
         animalRepository
-            .findByIdAndOwnerAndActiveTrue(id, getCurrentUser())
+            .findByIdAndOwnerAndActiveTrue(id, getCurrentOwner())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND));
 
     String microchip = cleanMicrochip(request.getMicrochipNumber());
@@ -118,7 +123,7 @@ public class AnimalService {
   public void deleteAnimal(Long id) {
     Animal animal =
         animalRepository
-            .findByIdAndOwnerAndActiveTrue(id, getCurrentUser())
+            .findByIdAndOwnerAndActiveTrue(id, getCurrentOwner())
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND));
 
     animal.setActive(false);
