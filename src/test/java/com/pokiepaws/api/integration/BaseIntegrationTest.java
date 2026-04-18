@@ -16,14 +16,14 @@ public abstract class BaseIntegrationTest {
 
   @Container
   static final PostgreSQLContainer<?> POSTGRES =
-          new PostgreSQLContainer<>("postgres:16-alpine")
-                  .withDatabaseName("pokiepaws_test")
-                  .withUsername("test_user")
-                  .withPassword("test_password");
+      new PostgreSQLContainer<>("postgres:16-alpine")
+          .withDatabaseName("pokiepaws_test")
+          .withUsername("test_user")
+          .withPassword("test_password");
+
   @Container
   static final GenericContainer<?> MAILPIT =
-          new GenericContainer<>("axllent/mailpit:latest")
-                  .withExposedPorts(1025, 8025);
+      new GenericContainer<>("axllent/mailpit:latest").withExposedPorts(1025, 8025);
 
   @DynamicPropertySource
   static void registerProps(DynamicPropertyRegistry registry) {
