@@ -42,9 +42,9 @@ public class Animal {
   @Column(columnDefinition = "TEXT")
   private String notes;
 
-  @ManyToOne(fetch = FetchType.LAZY)
-  @JoinColumn(name = "owner_id", nullable = false)
-  private User owner;
+  @ManyToOne(fetch = FetchType.LAZY, optional = false)
+  @JoinColumn(name = "owner_user_id", nullable = false)
+  private Owner owner;
 
   @Builder.Default
   @Column(nullable = false)
