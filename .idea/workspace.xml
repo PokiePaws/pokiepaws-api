@@ -4,20 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="71cb15bd-f353-4a48-95e6-2b7b9b0011f5" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/ClinicController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/ClinicController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/VetController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/VetController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Clinic.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Clinic.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Vet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Vet.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Visit.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Visit.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/VisitsStatus.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/VisitStatus.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/ClinicRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/ClinicRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/VetRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/VetRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/VisitRepository.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/VisitRepository.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/ClinicService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/ClinicService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/VetService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/VetService.java" afterDir="false" />
-    </list>
+    <list default="true" id="71cb15bd-f353-4a48-95e6-2b7b9b0011f5" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
