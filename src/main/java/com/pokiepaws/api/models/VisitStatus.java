@@ -1,6 +1,6 @@
 package com.pokiepaws.api.models;
 
-public enum VisitsStatus {
+public enum VisitStatus {
   SCHEDULED,
   IN_PROGRESS,
   DONE,
