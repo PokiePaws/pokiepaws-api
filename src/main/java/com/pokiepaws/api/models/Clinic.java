@@ -5,8 +5,10 @@ import lombok.*;
 
 @Entity
 @Table(name = "clinics")
-@Getter @Setter
-@NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Clinic {
 
@@ -14,30 +16,43 @@ public class Clinic {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
-    private String name;
+    @Column(name = "clinic_name", nullable = false)
+    private String clinicName;
 
-    @Column
+    @Column(name = "regon", nullable = false, unique = true)
+    private String regon;
+
+    @Column(name = "nip")
+    private String nip;
+
+    @Column(name = "street", nullable = false)
+    private String street;
+
+    @Column(name = "house_number", nullable = false)
+    private String houseNumber;
+
+    @Column(name = "apartment_number")
+    private String apartmentNumber;
+
+    @Column(name = "postal_code", nullable = false)
+    private String postalCode;
+
+    @Column(name = "city", nullable = false)
     private String city;
 
-    @Column
-    private String address;
+    @Column(name = "country", nullable = false)
+    private String country;
 
-    @Column
+    @Column(name = "working_hours")
+    private String workingHours;
+
+    @Column(name = "phone")
     private String phone;
 
-    @Column
+    @Column(name = "email")
     private String email;
 
-    @Column
-    private String manager;
-
-    @Column
-    private String image;
-
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
-    @Column
-    private Double rating;
+    @Builder.Default
+    @Column(nullable = false)
+    private boolean active = true;
 }

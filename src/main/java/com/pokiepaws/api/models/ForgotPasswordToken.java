@@ -1,8 +1,8 @@
 package com.pokiepaws.api.models;
 
 import jakarta.persistence.*;
-import lombok.*;
 import java.time.LocalDateTime;
+import lombok.*;
 
 @Entity
 @Table(name = "forgot_password_tokens")
@@ -13,20 +13,20 @@ import java.time.LocalDateTime;
 @Builder
 public class ForgotPasswordToken {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String tokenHash;
+  @Column(nullable = false, unique = true)
+  private String tokenHash;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+  @ManyToOne
+  @JoinColumn(name = "user_id")
+  private User user;
 
-    @Column(nullable = false)
-    private LocalDateTime expiresAt;
+  @Column(nullable = false)
+  private LocalDateTime expiresAt;
 
-    @Column(nullable = false)
-    private boolean used = false;
+  @Column(nullable = false)
+  private boolean used = false;
 }

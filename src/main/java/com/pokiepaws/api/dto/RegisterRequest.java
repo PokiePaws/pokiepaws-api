@@ -8,37 +8,27 @@ import lombok.Data;
 @Data
 public class RegisterRequest {
 
-    @NotBlank
-    private String firstName;
+  @NotBlank private String firstName;
 
-    @NotBlank
-    private String lastName;
+  @NotBlank private String lastName;
 
-    @NotBlank
-    private String phoneNumber;
+  @NotBlank private String phoneNumber;
 
-    @NotBlank
-    private String street;
+  @NotBlank private String street;
 
-    @NotBlank
-    private String houseNumber;
+  @NotBlank private String houseNumber;
 
-    private String apartmentNumber;
+  private String apartmentNumber;
 
-    @Pattern(regexp = "\\d{2}-\\d{3}", message = "Postal code must match XX-XXX format")
-    @NotBlank
-    private String postalCode;
+  @Pattern(regexp = "\\d{2}-\\d{3}", message = "Postal code must match XX-XXX format")
+  @NotBlank
+  private String postalCode;
 
-    @NotBlank
-    private String city;
+  @NotBlank private String city;
 
-    @NotBlank
-    private String country;
+  @NotBlank private String country;
 
-    @Email
-    @NotBlank
-    private String email;
+  @Email @NotBlank private String email;
 
-    @NotBlank
-    private String password;
+  @NotBlank private String password;
 }
