@@ -5,18 +5,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="71cb15bd-f353-4a48-95e6-2b7b9b0011f5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/.github/workflows/deploy-api.yml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AnimalController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/AnimalRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/AnimalResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/MessageResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Animal.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/AnimalRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AnimalService.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AuthService.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -29,6 +18,7 @@
         <option value="Dockerfile" />
         <option value="Kotlin File" />
         <option value="Interface" />
+        <option value="Enum" />
         <option value="Class" />
       </list>
     </option>
@@ -36,7 +26,7 @@
   <component name="Git.Settings">
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="feature/animals" />
+        <entry key="$PROJECT_DIR$" value="feature/visits" />
       </map>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -77,17 +67,19 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "Application.PokiepawsApiApplication.executor": "Run",
+    "JUnit.PokiepawsApiApplicationTests.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
     "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
     "RunOnceActivity.git.unshallow": "true",
     "Spring Boot.PokiepawsApiApplication.executor": "Run",
-    "git-widget-placeholder": "#3 on feature/admin",
+    "git-widget-placeholder": "#14 on feature/refactor",
     "kotlin-language-version-configured": "true",
     "last_opened_file_path": "C:/Users/Gabriela/Desktop/pokiepaws-api",
     "project.structure.last.edited": "SDKs",
     "project.structure.proportion": "0.0",
     "project.structure.side.proportion": "0.0",
+    "run.code.analysis.last.selected.profile": "pProject Default",
     "settings.editor.selected.configurable": "preferences.pluginManager"
   },
   "keyToStringList": {
