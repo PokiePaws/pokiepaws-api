@@ -20,7 +20,5 @@ public interface VetRepository extends JpaRepository<Vet, Long> {
   boolean existsByNpwz(String npwz);
 
   List<Vet> findAllByClinicId(Long clinicId);
-
-  List<Vet> findAllBySpecialization(String specialization);
 }
 >>>>>>> 4e343b6 (Merge fix)
