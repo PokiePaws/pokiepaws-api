@@ -23,4 +23,12 @@
         <Bug pattern="EI_EXPOSE_REP2" />
     </Match>
 
+    <Match>
+        <Package name="~com\.pokiepaws\.api\.dto(\..*)?" />
+        <Or>
+            <Bug pattern="EI_EXPOSE_REP" />
+            <Bug pattern="EI_EXPOSE_REP2" />
+        </Or>
+    </Match>
+
 </FindBugsFilter>
