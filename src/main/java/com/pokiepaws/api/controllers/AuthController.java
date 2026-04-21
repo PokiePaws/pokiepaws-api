@@ -1,6 +1,6 @@
 package com.pokiepaws.api.controllers;
 
-import com.pokiepaws.api.dto.*;
+import com.pokiepaws.api.dto.auth.*;
 import com.pokiepaws.api.services.AuthService;
 import jakarta.validation.Valid;
 import java.net.URI;

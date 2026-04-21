@@ -1,5 +1,6 @@
 package com.pokiepaws.api.controllers;
 
+import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
 import java.util.List;
@@ -29,14 +30,13 @@ public class VetController {
   }
 
   @PostMapping
-  public Vet create(@RequestBody Vet vet) {
-    return vetService.save(vet);
+  public Vet create(@RequestBody VetRequest request) {
+    return vetService.save(request);
   }
 
   @PutMapping("/{id}")
-  public Vet update(@PathVariable Long id, @RequestBody Vet vet) {
-    vet.setUserId(id);
-    return vetService.save(vet);
+  public Vet update(@PathVariable Long id, @RequestBody VetRequest request) {
+    return vetService.update(id, request);
   }
 
   @DeleteMapping("/{id}")

@@ -1,4 +1,4 @@
-package com.pokiepaws.api.dto;
+package com.pokiepaws.api.dto.auth;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

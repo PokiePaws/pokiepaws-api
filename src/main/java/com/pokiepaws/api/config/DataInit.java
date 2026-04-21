@@ -1,6 +1,6 @@
 package com.pokiepaws.api.config;
 
-import com.pokiepaws.api.config.seeders.Seeder;
+import com.pokiepaws.api.config.datainit.seeders.Seeder;
 import java.util.Comparator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;

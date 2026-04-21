@@ -2,10 +2,14 @@ package com.pokiepaws.api.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "vets")
 @Builder
+@SQLDelete(sql = "UPDATE vets SET active = false WHERE user_id = ?")
+@SQLRestriction("active = true")
 public class Vet {
   @Id
 <<<<<<< HEAD
@@ -42,5 +46,9 @@ public class Vet {
 
   @Column(name = "specialization")
   private String specialization;
+
+  @Builder.Default
+  @Column(name = "active", nullable = false)
+  private boolean active = true;
 }
 >>>>>>> 4e343b6 (Merge fix)

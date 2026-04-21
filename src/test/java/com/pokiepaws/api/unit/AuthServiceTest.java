@@ -4,10 +4,10 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
-import com.pokiepaws.api.dto.AuthRequest;
-import com.pokiepaws.api.dto.AuthResponse;
-import com.pokiepaws.api.dto.RegisterRequest;
-import com.pokiepaws.api.dto.ResetPasswordRequest;
+import com.pokiepaws.api.dto.auth.AuthRequest;
+import com.pokiepaws.api.dto.auth.AuthResponse;
+import com.pokiepaws.api.dto.auth.RegisterRequest;
+import com.pokiepaws.api.dto.auth.ResetPasswordRequest;
 import com.pokiepaws.api.models.EmailVerificationToken;
 import com.pokiepaws.api.models.ForgotPasswordToken;
 import com.pokiepaws.api.models.Owner;
