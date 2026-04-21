@@ -4,25 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="71cb15bd-f353-4a48-95e6-2b7b9b0011f5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/PrescriptionController.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/CreatePrescriptionRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/PrescriptionItemRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/PrescriptionItemResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/PrescriptionResponse.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/ClinicStockItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Prescription.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/PrescriptionItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Product.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/WarehouseStockItem.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/ClinicStockItemRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/PrescriptionRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/ProductRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/repositories/WarehouseStockItemRepository.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/PrescriptionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/spotbugs-exclude.xml" beforeDir="false" afterPath="$PROJECT_DIR$/spotbugs-exclude.xml" afterDir="false" />
-    </list>
+    <list default="true" id="71cb15bd-f353-4a48-95e6-2b7b9b0011f5" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -130,7 +112,7 @@
       <workItem from="1776610926773" duration="891000" />
       <workItem from="1776799471310" duration="2010000" />
       <workItem from="1776801505932" duration="57000" />
-      <workItem from="1776801573706" duration="1141000" />
+      <workItem from="1776801573706" duration="1577000" />
     </task>
     <servers />
   </component>
