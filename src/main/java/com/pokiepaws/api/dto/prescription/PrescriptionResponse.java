@@ -1,4 +1,4 @@
-package com.pokiepaws.api.dto;
+package com.pokiepaws.api.dto.prescription;
 
 import java.time.LocalDate;
 import java.util.List;

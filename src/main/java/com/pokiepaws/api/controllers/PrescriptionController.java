@@ -1,7 +1,7 @@
 package com.pokiepaws.api.controllers;
 
-import com.pokiepaws.api.dto.CreatePrescriptionRequest;
-import com.pokiepaws.api.dto.PrescriptionResponse;
+import com.pokiepaws.api.dto.prescription.CreatePrescriptionRequest;
+import com.pokiepaws.api.dto.prescription.PrescriptionResponse;
 import com.pokiepaws.api.services.PrescriptionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

@@ -7,8 +7,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.pokiepaws.api.dto.AuthRequest;
-import com.pokiepaws.api.dto.RegisterRequest;
+import com.pokiepaws.api.dto.auth.AuthRequest;
+import com.pokiepaws.api.dto.auth.RegisterRequest;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
 import org.junit.jupiter.api.Test;

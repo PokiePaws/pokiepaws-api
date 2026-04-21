@@ -1,4 +1,4 @@
-package com.pokiepaws.api.dto;
+package com.pokiepaws.api.dto.auth;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;

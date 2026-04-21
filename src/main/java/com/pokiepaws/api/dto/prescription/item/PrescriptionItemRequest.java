@@ -1,4 +1,4 @@
-package com.pokiepaws.api.dto;
+package com.pokiepaws.api.dto.prescription.item;
 
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;

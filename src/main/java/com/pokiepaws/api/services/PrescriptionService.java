@@ -1,8 +1,8 @@
 package com.pokiepaws.api.services;
 
-import com.pokiepaws.api.dto.CreatePrescriptionRequest;
-import com.pokiepaws.api.dto.PrescriptionItemResponse;
-import com.pokiepaws.api.dto.PrescriptionResponse;
+import com.pokiepaws.api.dto.prescription.CreatePrescriptionRequest;
+import com.pokiepaws.api.dto.prescription.PrescriptionItemResponse;
+import com.pokiepaws.api.dto.prescription.PrescriptionResponse;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.*;
 import com.pokiepaws.api.repositories.UserRepository;

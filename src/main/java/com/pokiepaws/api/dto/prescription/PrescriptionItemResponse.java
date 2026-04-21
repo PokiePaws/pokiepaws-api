@@ -1,4 +1,4 @@
-package com.pokiepaws.api.dto;
+package com.pokiepaws.api.dto.prescription;
 
 import lombok.Builder;
 import lombok.Value;

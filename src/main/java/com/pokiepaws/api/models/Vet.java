@@ -2,6 +2,8 @@ package com.pokiepaws.api.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "vets")
@@ -10,6 +12,8 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@SQLDelete(sql = "UPDATE vets SET active = false WHERE user_id = ?")
+@SQLRestriction("active = true")
 public class Vet {
   @Id
   @Column(name = "user_id")
@@ -38,4 +42,8 @@ public class Vet {
 
   @Column(name = "specialization")
   private String specialization;
+
+  @Builder.Default
+  @Column(name = "active", nullable = false)
+  private boolean active = true;
 }
