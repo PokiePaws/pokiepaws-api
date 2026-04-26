@@ -5,56 +5,9 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="71cb15bd-f353-4a48-95e6-2b7b9b0011f5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/dto/AnimalSeedDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/dto/ClinicSeedDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/dto/OwnerSeedDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/dto/VetSeedDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/dto/WarehouseSeedDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/dto/WarehouseWorkerSeedDto.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/AnimalsSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/ClinicsSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/OwnersSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/VetsSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/WarehouseWorkersSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/WarehousesSeeder.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/vet/VetRequest.java" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/vet/VetResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/DataInit.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/DataInit.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/SecurityConfig.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/SecurityConfig.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/AdminSeeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/AdminSeeder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/AnimalsSeeder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/ClinicsSeeder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/OwnersSeeder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/Seeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/Seeder.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/VetsSeeder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/WarehouseWorkersSeeder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/seeders/WarehousesSeeder.java" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AnimalController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AnimalController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AuthController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/AuthController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/PrescriptionController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/PrescriptionController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/VetController.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/controllers/VetController.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/AnimalRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/animal/AnimalRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/AnimalResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/animal/AnimalResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/AuthRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/auth/AuthRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/AuthResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/auth/AuthResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/CreatePrescriptionRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/prescription/CreatePrescriptionRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/ForgotPasswordRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/auth/ForgotPasswordRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/MessageResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/auth/MessageResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/PrescriptionItemRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/prescription/item/PrescriptionItemRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/PrescriptionItemResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/prescription/PrescriptionItemResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/PrescriptionResponse.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/prescription/PrescriptionResponse.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/RegisterRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/auth/RegisterRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/ResetPasswordRequest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/dto/auth/ResetPasswordRequest.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Vet.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/models/Vet.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/WarehouseWorkersSeeder.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/config/datainit/seeders/WarehouseWorkersSeeder.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/security/JwtAuthFilter.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/security/JwtAuthFilter.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AnimalService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AnimalService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AuthService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/AuthService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/PrescriptionService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/PrescriptionService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/VetService.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/pokiepaws/api/services/VetService.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/pokiepaws/api/integration/AuthControllerInitTests.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/pokiepaws/api/integration/AuthControllerInitTests.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/com/pokiepaws/api/unit/AuthServiceTest.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/com/pokiepaws/api/unit/AuthServiceTest.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -107,7 +60,7 @@
     </option>
   </component>
   <component name="ProblemsViewState">
-    <option name="selectedTabId" value="ProjectErrors" />
+    <option name="selectedTabId" value="CurrentFile" />
   </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
@@ -117,33 +70,33 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;Application.PokiepawsApiApplication.executor&quot;: &quot;Run&quot;,
-    &quot;JUnit.PokiepawsApiApplicationTests.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;Spring Boot.PokiepawsApiApplication.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;feature/prescriptions&quot;,
-    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;C:/Users/Gabriela/Desktop/pokiepaws-api&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;project.structure.last.edited&quot;: &quot;SDKs&quot;,
-    &quot;project.structure.proportion&quot;: &quot;0.0&quot;,
-    &quot;project.structure.side.proportion&quot;: &quot;0.0&quot;,
-    &quot;run.code.analysis.last.selected.profile&quot;: &quot;pProject Default&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;reference.projectsettings.compiler.annotationProcessors&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "Application.PokiepawsApiApplication.executor": "Run",
+    "JUnit.PokiepawsApiApplicationTests.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "Spring Boot.PokiepawsApiApplication.executor": "Run",
+    "git-widget-placeholder": "#16 on feature/prescriptions",
+    "kotlin-language-version-configured": "true",
+    "last_opened_file_path": "C:/Users/Gabriela/Desktop/pokiepaws-api",
+    "nodejs_package_manager_path": "npm",
+    "project.structure.last.edited": "SDKs",
+    "project.structure.proportion": "0.0",
+    "project.structure.side.proportion": "0.0",
+    "run.code.analysis.last.selected.profile": "pProject Default",
+    "settings.editor.selected.configurable": "reference.projectsettings.compiler.annotationProcessors",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;DatabaseDriversLRU&quot;: [
-      &quot;postgresql&quot;
+  "keyToStringList": {
+    "DatabaseDriversLRU": [
+      "postgresql"
     ]
   }
-}</component>
+}]]></component>
   <component name="QodanaCIConfigService">
     <option name="path" value="$PROJECT_DIR$/.github/workflows/qodana_code_quality.yml" />
   </component>
@@ -166,7 +119,8 @@
       <workItem from="1776610926773" duration="891000" />
       <workItem from="1776799471310" duration="2010000" />
       <workItem from="1776801505932" duration="57000" />
-      <workItem from="1776801573706" duration="9661000" />
+      <workItem from="1776801573706" duration="10386000" />
+      <workItem from="1776841583670" duration="6872000" />
     </task>
     <servers />
   </component>
