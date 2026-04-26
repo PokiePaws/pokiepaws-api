@@ -11,7 +11,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 @Configuration
 public class CorsConfig {
 
-  @Value("${FRONTEND_URL}")
+  @Value("${app.frontend-url}")
   private String frontendUrl;
 
   @Bean
