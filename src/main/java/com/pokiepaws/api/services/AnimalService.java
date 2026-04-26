@@ -1,7 +1,7 @@
 package com.pokiepaws.api.services;
 
-import com.pokiepaws.api.dto.AnimalRequest;
-import com.pokiepaws.api.dto.AnimalResponse;
+import com.pokiepaws.api.dto.animal.AnimalRequest;
+import com.pokiepaws.api.dto.animal.AnimalResponse;
 import com.pokiepaws.api.models.Animal;
 import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.repositories.AnimalRepository;

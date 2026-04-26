@@ -1,8 +1,8 @@
 package com.pokiepaws.api.controllers;
 
 import com.pokiepaws.api.config.OpenApiConfig;
-import com.pokiepaws.api.dto.AnimalRequest;
-import com.pokiepaws.api.dto.AnimalResponse;
+import com.pokiepaws.api.dto.animal.AnimalRequest;
+import com.pokiepaws.api.dto.animal.AnimalResponse;
 import com.pokiepaws.api.services.AnimalService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
