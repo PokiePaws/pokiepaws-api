@@ -27,35 +27,37 @@ public class SecurityConfig {
   private final JwtAuthFilter jwtAuthFilter;
 
   @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http,
-                                                 CorsConfigurationSource corsConfigurationSource) throws Exception {
-    http
-            .cors(cors -> cors.configurationSource(corsConfigurationSource))
-            .csrf(AbstractHttpConfigurer::disable)
-            .authorizeHttpRequests(auth -> auth
-                    .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                    .requestMatchers(
-                            "/error",
-                            "/api/auth/**",
-                            "/swagger-ui/**",
-                            "/swagger-ui.html",
-                            "/api/clinics",
-                            "/api/clinics/**",
-                            "/api-docs/**",
-                            "/v3/api-docs/**",
-                            "/webjars/**")
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(HttpMethod.OPTIONS, "/**")
                     .permitAll()
-                    .anyRequest().authenticated())
-            .sessionManagement(session ->
-                    session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                    .requestMatchers(
+                        "/error",
+                        "/api/auth/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html",
+                        "/api/clinics",
+                        "/api/clinics/**",
+                        "/api-docs/**",
+                        "/v3/api-docs/**",
+                        "/webjars/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
     return http.build();
   }
 
   @Bean
   public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-          throws Exception {
+      throws Exception {
     return config.getAuthenticationManager();
   }
 
