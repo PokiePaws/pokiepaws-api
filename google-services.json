@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "834615815821",
+    "project_id": "pokiepaws-6eb4f",
+    "storage_bucket": "pokiepaws-6eb4f.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:834615815821:android:47c25c578b2b2f121dbcc4",
+        "android_client_info": {
+          "package_name": "com.pokiepaws.mobile"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDcmG7iRj_79wkGiF5Eq0oaRZP40V_IFS0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
