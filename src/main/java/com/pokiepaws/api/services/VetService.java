@@ -1,5 +1,6 @@
 package com.pokiepaws.api.services;
 
+import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.User;
@@ -9,6 +10,7 @@ import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -89,5 +91,20 @@ public class VetService {
           vet.getFirstName(),
           vet.getLastName());
     }
+  }
+
+  @Transactional(readOnly = true)
+  public List<VetListResponse> getListItemsByClinic(Long clinicId) {
+    return vetRepository.findAllByClinicId(clinicId).stream()
+        .map(
+            v ->
+                VetListResponse.builder()
+                    .userId(v.getUserId())
+                    .firstName(v.getFirstName())
+                    .lastName(v.getLastName())
+                    .npwz(v.getNpwz())
+                    .specialization(v.getSpecialization())
+                    .build())
+        .collect(Collectors.toList());
   }
 }
