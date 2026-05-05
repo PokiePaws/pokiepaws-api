@@ -1,4 +1,4 @@
-package com.pokiepaws.api.config.seeders;
+package com.pokiepaws.api.config.datainit.seeders;
 
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;

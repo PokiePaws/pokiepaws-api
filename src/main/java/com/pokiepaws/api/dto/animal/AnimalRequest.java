@@ -1,4 +1,4 @@
-package com.pokiepaws.api.dto;
+package com.pokiepaws.api.dto.animal;
 
 import com.pokiepaws.api.models.Animal;
 import jakarta.validation.constraints.NotBlank;
