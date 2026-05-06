@@ -25,7 +25,10 @@ jobs:
         run: ./mvnw -q spotless:check
 
       - name: Run tests + SpotBugs + Coverage
-        run: ./mvnw -q verify
+        run: ./mvnw verify
+        env:
+          DOCKER_HOST: unix:///var/run/docker.sock
+          TESTCONTAINERS_RYUK_DISABLED: false
 
       - name: Debug - List coverage files
         if: always()
