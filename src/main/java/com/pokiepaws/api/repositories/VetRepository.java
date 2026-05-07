@@ -1,11 +1,13 @@
 package com.pokiepaws.api.repositories;
 
+import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.Vet;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface VetRepository extends JpaRepository<Vet, Long> {
+  Optional<Vet> findFirstByClinic(Clinic clinic);
 
   Optional<Vet> findByUserEmail(String email);
 

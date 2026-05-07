@@ -19,11 +19,11 @@ public class Clinic {
   @Column(name = "clinic_name", nullable = false)
   private String clinicName;
 
-  @Column(name = "regon", nullable = false, unique = true)
-  private String regon;
-
   @Column(name = "nip")
   private String nip;
+
+  @Column(name = "regon", nullable = false, unique = true)
+  private String regon;
 
   @Column(name = "street", nullable = false)
   private String street;

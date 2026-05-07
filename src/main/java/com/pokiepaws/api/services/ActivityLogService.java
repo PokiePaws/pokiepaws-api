@@ -57,8 +57,7 @@ public class ActivityLogService {
     } else {
       try {
         logs =
-            activityLogRepository.findByTypeOrderByTimeDesc(
-                LogType.valueOf(typeFilter), pageable);
+            activityLogRepository.findByTypeOrderByTimeDesc(LogType.valueOf(typeFilter), pageable);
       } catch (IllegalArgumentException ex) {
         logs = List.of();
       }

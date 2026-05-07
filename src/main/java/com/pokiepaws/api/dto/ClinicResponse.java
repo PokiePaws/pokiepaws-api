@@ -14,9 +14,24 @@ import lombok.Setter;
 public class ClinicResponse {
 
   private Long id;
-  private String name;
-  private String address;
-  private String hours;
+  private String clinicName;
+  private String regon;
+  private String nip;
+
+  private String street;
+  private String houseNumber;
+  private String apartmentNumber;
+  private String postalCode;
+  private String city;
+  private String country;
+
+  /** Sklejony adres w jednej linii — wygodne dla frontendu. */
+  private String displayAddress;
+
+  private String workingHours;
+  private String phone;
+  private String email;
   private boolean active;
+
   private String adminName;
 }

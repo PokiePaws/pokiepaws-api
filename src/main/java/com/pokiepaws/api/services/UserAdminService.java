@@ -7,10 +7,12 @@ import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.models.Vet;
+import com.pokiepaws.api.models.Warehouse;
 import com.pokiepaws.api.models.WarehouseWorker;
 import com.pokiepaws.api.repositories.ClinicRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
+import com.pokiepaws.api.repositories.WarehouseRepository;
 import com.pokiepaws.api.repositories.WarehouseWorkerRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -29,11 +31,14 @@ public class UserAdminService {
   private static final String PASSWORD_REQUIRED = "Password is required for new users";
   private static final String NPWZ_REQUIRED = "NPWZ is required for veterinarians";
   private static final String CLINIC_REQUIRED = "Clinic is required for this role";
+  private static final String NO_WAREHOUSE_IN_CITY =
+      "No active warehouse found in clinic's city. Add a warehouse there first.";
   private static final String INVALID_ROLE = "Invalid role: ";
 
   private final UserRepository userRepository;
   private final ClinicRepository clinicRepository;
   private final VetRepository vetRepository;
+  private final WarehouseRepository warehouseRepository;
   private final WarehouseWorkerRepository warehouseWorkerRepository;
   private final PasswordEncoder passwordEncoder;
   private final ActivityLogService activityLogService;
@@ -66,7 +71,7 @@ public class UserAdminService {
             .password(passwordEncoder.encode(request.getPassword()))
             .role(role)
             .active(request.isActive())
-            .emailVerified(true) // tworzony przez admina, nie wymaga weryfikacji
+            .emailVerified(true)
             .build();
     user = userRepository.save(user);
 
@@ -82,7 +87,7 @@ public class UserAdminService {
             + " ("
             + user.getEmail()
             + ")",
-        clinic != null ? clinic.getName() : null);
+        clinic != null ? clinic.getClinicName() : null);
 
     return toDto(user);
   }
@@ -103,14 +108,13 @@ public class UserAdminService {
 
     Clinic clinic = resolveClinic(request.getClinicId());
 
-    // Czyścimy stare profile pod inne role i zapisujemy aktualny
     cleanupOtherRoleProfiles(user, role);
     persistRoleProfile(user, role, clinic, request);
 
     activityLogService.log(
         LogType.data,
         "Zaktualizowano użytkownika: " + request.getFirstName() + " " + request.getLastName(),
-        clinic != null ? clinic.getName() : null);
+        clinic != null ? clinic.getClinicName() : null);
 
     return toDto(user);
   }
@@ -132,9 +136,7 @@ public class UserAdminService {
     switch (role) {
       case VET -> {
         Vet vet =
-            vetRepository
-                .findById(user.getId())
-                .orElseGet(() -> Vet.builder().user(user).build());
+            vetRepository.findById(user.getId()).orElseGet(() -> Vet.builder().user(user).build());
         vet.setFirstName(req.getFirstName());
         vet.setLastName(req.getLastName());
         vet.setPhone(req.getPhone());
@@ -144,18 +146,21 @@ public class UserAdminService {
         vetRepository.save(vet);
       }
       case WAREHOUSE -> {
+        Warehouse warehouse = findWarehouseInCityOf(clinic);
+
         WarehouseWorker worker =
             warehouseWorkerRepository
                 .findById(user.getId())
                 .orElseGet(() -> WarehouseWorker.builder().user(user).build());
         worker.setFirstName(req.getFirstName());
         worker.setLastName(req.getLastName());
-        worker.setPhone(req.getPhone());
-        worker.setClinic(clinic);
+        worker.setPhoneNumber(req.getPhone());
+        worker.setWarehouse(warehouse);
+        worker.setActive(req.isActive());
         warehouseWorkerRepository.save(worker);
       }
       default -> {
-        // ADMIN / SUPER_ADMIN — brak osobnego profilu, dane tylko w User
+        // ADMIN / SUPER_ADMIN / OWNER — brak osobnego profilu
       }
     }
   }
@@ -165,9 +170,7 @@ public class UserAdminService {
       vetRepository.findById(user.getId()).ifPresent(vetRepository::delete);
     }
     if (keep != Role.WAREHOUSE) {
-      warehouseWorkerRepository
-          .findById(user.getId())
-          .ifPresent(warehouseWorkerRepository::delete);
+      warehouseWorkerRepository.findById(user.getId()).ifPresent(warehouseWorkerRepository::delete);
     }
   }
 
@@ -184,8 +187,18 @@ public class UserAdminService {
     if (clinicId == null) return null;
     return clinicRepository
         .findById(clinicId)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clinic not found"));
+  }
+
+  /**
+   * Magazyn dobierany jest po mieście kliniki — np. klinika w Warszawie → magazyn w Warszawie.
+   * Wymaga, by w mieście istniał aktywny magazyn.
+   */
+  private Warehouse findWarehouseInCityOf(Clinic clinic) {
+    return warehouseRepository
+        .findFirstByCityIgnoreCaseAndActiveTrue(clinic.getCity())
         .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Clinic not found"));
+            () -> new ResponseStatusException(HttpStatus.BAD_REQUEST, NO_WAREHOUSE_IN_CITY));
   }
 
   private Role parseRole(String role) {
@@ -208,7 +221,8 @@ public class UserAdminService {
     String npwz = null;
     String phone = null;
     String specialization = null;
-    Clinic clinic = null;
+    Long clinicId = null;
+    String clinicName = null;
 
     if (user.getRole() == Role.VET) {
       Vet vet = vetRepository.findById(user.getId()).orElse(null);
@@ -218,15 +232,28 @@ public class UserAdminService {
         npwz = vet.getNpwz();
         phone = vet.getPhone();
         specialization = vet.getSpecialization();
-        clinic = vet.getClinic();
+        if (vet.getClinic() != null) {
+          clinicId = vet.getClinic().getId();
+          clinicName = vet.getClinic().getClinicName();
+        }
       }
     } else if (user.getRole() == Role.WAREHOUSE) {
       WarehouseWorker worker = warehouseWorkerRepository.findById(user.getId()).orElse(null);
       if (worker != null) {
         firstName = worker.getFirstName();
         lastName = worker.getLastName();
-        phone = worker.getPhone();
-        clinic = worker.getClinic();
+        phone = worker.getPhoneNumber();
+        // Klinika magazyniera = pierwsza klinika w mieście jego magazynu (do prezentacji)
+        if (worker.getWarehouse() != null) {
+          Clinic c =
+              clinicRepository
+                  .findFirstByCityIgnoreCase(worker.getWarehouse().getCity())
+                  .orElse(null);
+          if (c != null) {
+            clinicId = c.getId();
+            clinicName = c.getClinicName();
+          }
+        }
       }
     }
 
@@ -236,8 +263,8 @@ public class UserAdminService {
         .lastName(lastName)
         .email(user.getEmail())
         .role(user.getRole().name())
-        .clinicId(clinic != null ? clinic.getId() : null)
-        .clinicName(clinic != null ? clinic.getName() : null)
+        .clinicId(clinicId)
+        .clinicName(clinicName)
         .active(user.isActive())
         .emailVerified(user.isEmailVerified())
         .npwz(npwz)
