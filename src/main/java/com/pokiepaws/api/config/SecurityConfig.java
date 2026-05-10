@@ -38,13 +38,15 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/error",
                         "/api/auth/**",
-                        "/swagger-ui/**",
                         "/swagger-ui.html",
-                        "/api/clinics",
-                        "/api/clinics/**",
-                        "/api-docs/**",
+                        "/swagger-ui/**",
                         "/v3/api-docs/**",
-                        "/webjars/**")
+                        "/api-docs/**",
+                        "/webjars/**",
+                        "/swagger-ui/index.html",
+                        "/swagger-ui/swagger-initializer.js",
+                        "/api/clinics",
+                        "/api/clinics/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

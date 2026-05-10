@@ -17,13 +17,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
-@Disabled("Tymczasowo wyłączone z powodu problemów z Dockerem na GitHub Actions")
+@Disabled
 @AutoConfigureMockMvc
 class AuthControllerInitTests extends BaseIntegrationTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
-
   @Autowired EmailVerificationTokenRepository tokenRepository;
   @Autowired OwnerRepository ownerRepository;
 

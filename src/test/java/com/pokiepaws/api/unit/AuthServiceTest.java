@@ -29,6 +29,8 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -79,7 +81,7 @@ class AuthServiceTest {
     ReflectionTestUtils.setField(authService, "baseUrl", "${app.base-url}");
   }
 
-  private RegisterRequest validRegister(String email, String password) {
+  private RegisterRequest validRegister() {
     RegisterRequest request = new RegisterRequest();
     request.setFirstName("Anna");
     request.setLastName("Kowalska");
@@ -90,15 +92,15 @@ class AuthServiceTest {
     request.setPostalCode("59-220");
     request.setCity("Legnica");
     request.setCountry("Poland");
-    request.setEmail(email);
-    request.setPassword(password);
+    request.setEmail("newowner@pokiepaws.pl");
+    request.setPassword("Owner1234!");
     return request;
   }
 
-  private AuthRequest authRequest(String email, String password) {
+  private AuthRequest authRequest(String email) {
     AuthRequest request = new AuthRequest();
     request.setEmail(email);
-    request.setPassword(password);
+    request.setPassword("Owner1234!");
     return request;
   }
 
@@ -120,7 +122,7 @@ class AuthServiceTest {
 
   @Test
   void register_shouldThrow409_whenEmailAlreadyInUse() {
-    RegisterRequest request = validRegister("newowner@pokiepaws.pl", "Owner1234!");
+    RegisterRequest request = validRegister();
     when(userRepository.existsByEmail("newowner@pokiepaws.pl")).thenReturn(true);
 
     assertThatThrownBy(() -> authService.register(request))
@@ -140,7 +142,7 @@ class AuthServiceTest {
 
   @Test
   void register_shouldSaveUserOwnerToken_andSendVerificationEmail() {
-    RegisterRequest request = validRegister("newowner@pokiepaws.pl", "Owner1234!");
+    RegisterRequest request = validRegister();
 
     when(userRepository.existsByEmail("newowner@pokiepaws.pl")).thenReturn(false);
     when(passwordEncoder.encode("Owner1234!")).thenReturn("HASH");
@@ -193,7 +195,7 @@ class AuthServiceTest {
 
   @Test
   void login_shouldThrowUsernameNotFound_whenUserMissing() {
-    AuthRequest request = authRequest("ownernotfound@pokiepaws.pl", "Owner1234!");
+    AuthRequest request = authRequest("ownernotfound@pokiepaws.pl");
 
     when(userRepository.findByEmail("ownernotfound@pokiepaws.pl")).thenReturn(Optional.empty());
 
@@ -207,7 +209,7 @@ class AuthServiceTest {
 
   @Test
   void login_shouldThrow403_whenEmailNotVerified() {
-    AuthRequest request = authRequest("notverified@pokiepaws.pl", "Owner1234!");
+    AuthRequest request = authRequest("notverified@pokiepaws.pl");
 
     User user =
         User.builder()
@@ -248,7 +250,7 @@ class AuthServiceTest {
         .thenReturn(mock(Authentication.class));
     when(jwtService.generateToken(any(UserDetails.class))).thenReturn("JWT");
 
-    AuthResponse response = authService.login(authRequest("verified@pokiepaws.pl", "Owner1234!"));
+    AuthResponse response = authService.login(authRequest("verified@pokiepaws.pl"));
 
     assertThat(response.getToken()).isEqualTo("JWT");
     assertThat(response.getEmail()).isEqualTo("verified@pokiepaws.pl");
@@ -448,18 +450,19 @@ class AuthServiceTest {
     verify(forgotPasswordTokenRepository, never()).deleteAllByUser(any());
   }
 
-  @Test
-  void resetPassword_shouldThrow400_whenPasswordPolicyFails_noUppercase() {
-    User user = User.builder().email("incorrectpassword@pokiepaws.pl").password("OLD").build();
+  @ParameterizedTest(name = "Should throw 400 when password is \"{0}\" because {1}")
+  @MethodSource("invalidPasswordProvider")
+  void resetPassword_shouldThrow400_whenPasswordPolicyFails(
+      String invalidPassword, String expectedErrorMessage) {
+    User user = User.builder().email("owner@pokiepaws.pl").password("OLD").build();
     ForgotPasswordToken resettoken = validForgotToken(user, "HASHED");
 
     when(forgotPasswordTokenRepository.findAllByUsedFalseAndExpiresAtAfter(
             any(LocalDateTime.class)))
         .thenReturn(List.of(resettoken));
-
     when(passwordEncoder.matches("passwordresettoken", "HASHED")).thenReturn(true);
 
-    ResetPasswordRequest request = resetRequest("passwordresettoken", "lowercase1234!");
+    ResetPasswordRequest request = resetRequest("passwordresettoken", invalidPassword);
 
     assertThatThrownBy(() -> authService.resetPassword(request))
         .isInstanceOf(ResponseStatusException.class)
@@ -467,12 +470,26 @@ class AuthServiceTest {
             ex -> {
               ResponseStatusException rse = (ResponseStatusException) ex;
               assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(rse.getReason())
-                  .isEqualTo("The password must contain at least one uppercase letter");
+              assertThat(rse.getReason()).isEqualTo(expectedErrorMessage);
             });
 
     verify(userRepository, never()).save(any());
     verify(forgotPasswordTokenRepository, never()).deleteAllByUser(any());
+  }
+
+  private static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>
+      invalidPasswordProvider() {
+    return java.util.stream.Stream.of(
+        org.junit.jupiter.params.provider.Arguments.of(
+            "lowercase1234!", "The password must contain at least one uppercase letter"),
+        org.junit.jupiter.params.provider.Arguments.of(
+            "Aa1!", "The password must be at least 8 characters long"),
+        org.junit.jupiter.params.provider.Arguments.of(
+            "Password!", "The password must contain a number"),
+        org.junit.jupiter.params.provider.Arguments.of(
+            "Password1234", "The password must contain a special character"),
+        org.junit.jupiter.params.provider.Arguments.of(
+            "owner@pokiepaws.plA1!", "The password must not contain an email address"));
   }
 
   @Test
