@@ -1,7 +1,7 @@
 package com.pokiepaws.api.models;
 
 import jakarta.persistence.*;
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
@@ -29,14 +29,23 @@ public class Visit {
   @JoinColumn(name = "clinic_id", nullable = false)
   private Clinic clinic;
 
-  @Column(name = "visit_date", nullable = false)
-  private LocalDate visitDate;
+  @Column(name = "starts_at", nullable = false)
+  private LocalDateTime startsAt;
+
+  @Column(name = "ends_at", nullable = false)
+  private LocalDateTime endsAt;
 
   @Column(name = "description", columnDefinition = "TEXT")
   private String description;
 
   @Column(name = "disease")
   private String disease;
+
+  @Column(name = "diagnosis", columnDefinition = "TEXT")
+  private String diagnosis;
+
+  @Column(name = "recommendations", columnDefinition = "TEXT")
+  private String recommendations;
 
   @Enumerated(EnumType.STRING)
   @Column(name = "status", nullable = false)

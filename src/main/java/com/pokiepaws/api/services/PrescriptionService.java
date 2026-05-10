@@ -153,4 +153,77 @@ public class PrescriptionService {
                 .toList())
         .build();
   }
+
+  @Transactional(readOnly = true)
+  public PrescriptionResponse getForVisitForCurrentVetOrAdmin(Long visitId) {
+    Visit visit =
+        visitRepository
+            .findById(visitId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visit not found"));
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    Long currentUserId =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"))
+            .getId();
+
+    boolean isAdmin =
+        auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+    // Wet ma dostęp tylko do swoich wizyt, admin do wszystkich
+    if (!isAdmin && (visit.getVet() == null || !currentUserId.equals(visit.getVet().getUserId()))) {
+      throw new ResponseStatusException(
+          HttpStatus.FORBIDDEN, "You are not assigned vet for this visit");
+    }
+
+    Prescription prescription =
+        prescriptionRepository
+            .findByVisitId(visitId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Prescription not found for this visit"));
+
+    return toResponse(prescription);
+  }
+
+  @Transactional(readOnly = true)
+  public PrescriptionResponse getForVisitForCurrentOwner(Long visitId) {
+    Visit visit =
+        visitRepository
+            .findById(visitId)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visit not found"));
+
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    String email = auth.getName();
+
+    Long currentUserId =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"))
+            .getId();
+
+    if (visit.getAnimal() == null
+        || visit.getAnimal().getOwner() == null
+        || !currentUserId.equals(visit.getAnimal().getOwner().getUserId())) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This visit is not yours");
+    }
+
+    Prescription prescription =
+        prescriptionRepository
+            .findByVisitId(visitId)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Prescription not found for this visit"));
+
+    return toResponse(prescription);
+  }
 }
