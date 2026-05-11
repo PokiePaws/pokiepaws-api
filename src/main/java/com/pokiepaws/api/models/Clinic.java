@@ -5,20 +5,16 @@ import lombok.*;
 
 @Entity
 @Table(name = "clinics")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Clinic {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
-
-
-  private String city;
-
-
-  private String phone;
-
-  private String email;
 
   @Column(name = "clinic_name", nullable = false)
   private String clinicName;

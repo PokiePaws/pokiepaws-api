@@ -13,16 +13,16 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserAdminResponse {
 
-    private Long id;
-    private String firstName;
-    private String lastName;
-    private String email;
-    private String role;
-    private Long clinicId;
-    private String clinicName;
-    private boolean active;
-    private boolean emailVerified;
-    private String npwz;
-    private String phone;
-    private String specialization;
+  private Long id;
+  private String firstName;
+  private String lastName;
+  private String email;
+  private String role;
+  private Long clinicId;
+  private String clinicName;
+  private boolean active;
+  private boolean emailVerified;
+  private String npwz;
+  private String phone;
+  private String specialization;
 }

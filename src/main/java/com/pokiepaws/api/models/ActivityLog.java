@@ -10,11 +10,11 @@ import lombok.Setter;
 
 @Entity
 @Table(
-        name = "activity_logs",
-        indexes = {
-                @Index(name = "idx_log_time", columnList = "time"),
-                @Index(name = "idx_log_type", columnList = "type")
-        })
+    name = "activity_logs",
+    indexes = {
+      @Index(name = "idx_log_time", columnList = "time"),
+      @Index(name = "idx_log_type", columnList = "type")
+    })
 @Getter
 @Setter
 @Builder
@@ -22,36 +22,36 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ActivityLog {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+  @Id
+  @GeneratedValue(strategy = GenerationType.IDENTITY)
+  private Long id;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 32)
-    private LogType type;
+  @Enumerated(EnumType.STRING)
+  @Column(nullable = false, length = 32)
+  private LogType type;
 
-    @Column(name = "user_email", nullable = false, length = 160)
-    private String userEmail;
+  @Column(name = "user_email", nullable = false, length = 160)
+  private String userEmail;
 
-    @Column(nullable = false, length = 500)
-    private String detail;
+  @Column(nullable = false, length = 500)
+  private String detail;
 
-    @Column(length = 160)
-    private String clinic;
+  @Column(length = 160)
+  private String clinic;
 
-    @Column(nullable = false)
-    private LocalDateTime time;
+  @Column(nullable = false)
+  private LocalDateTime time;
 
-    @PrePersist
-    public void prePersist() {
-        if (time == null) time = LocalDateTime.now();
-    }
+  @PrePersist
+  public void prePersist() {
+    if (time == null) time = LocalDateTime.now();
+  }
 
-    public enum LogType {
-        login,
-        data,
-        supply,
-        lab,
-        prescription
-    }
+  public enum LogType {
+    login,
+    data,
+    supply,
+    lab,
+    prescription
+  }
 }

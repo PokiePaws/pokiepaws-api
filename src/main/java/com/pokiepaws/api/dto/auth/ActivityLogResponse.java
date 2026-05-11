@@ -14,10 +14,10 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ActivityLogResponse {
 
-    private Long id;
-    private String type;
-    private String userEmail;
-    private String detail;
-    private String clinic;
-    private LocalDateTime time;
+  private Long id;
+  private String type;
+  private String userEmail;
+  private String detail;
+  private String clinic;
+  private LocalDateTime time;
 }

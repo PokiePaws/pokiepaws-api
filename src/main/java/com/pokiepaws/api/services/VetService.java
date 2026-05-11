@@ -1,5 +1,6 @@
 package com.pokiepaws.api.services;
 
+import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.User;
@@ -35,6 +36,20 @@ public class VetService {
 
   public List<Vet> getByClinic(Long clinicId) {
     return vetRepository.findAllByClinicId(clinicId);
+  }
+
+  public List<VetListResponse> getListItemsByClinic(Long clinicId) {
+    return vetRepository.findAllByClinicId(clinicId).stream()
+        .map(
+            vet ->
+                VetListResponse.builder()
+                    .userId(vet.getUserId())
+                    .firstName(vet.getFirstName())
+                    .lastName(vet.getLastName())
+                    .npwz(vet.getNpwz())
+                    .specialization(vet.getSpecialization())
+                    .build())
+        .toList();
   }
 
   @Transactional

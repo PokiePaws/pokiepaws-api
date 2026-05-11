@@ -13,10 +13,10 @@ import lombok.Setter;
 @AllArgsConstructor
 public class ClinicResponse {
 
-    private Long id;
-    private String name;
-    private String address;
-    private String hours;
-    private boolean active;
-    private String adminName;
+  private Long id;
+  private String name;
+  private String address;
+  private String hours;
+  private boolean active;
+  private String adminName;
 }

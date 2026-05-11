@@ -9,9 +9,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> {
 
-    List<ActivityLog> findAllByOrderByTimeDesc(Pageable pageable);
+  List<ActivityLog> findAllByOrderByTimeDesc(Pageable pageable);
 
-    List<ActivityLog> findByTypeOrderByTimeDesc(LogType type, Pageable pageable);
+  List<ActivityLog> findByTypeOrderByTimeDesc(LogType type, Pageable pageable);
 
-    long countByTimeAfter(LocalDateTime from);
+  long countByTimeAfter(LocalDateTime from);
 }

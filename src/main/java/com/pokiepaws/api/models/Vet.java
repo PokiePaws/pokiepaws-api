@@ -7,12 +7,15 @@ import org.hibernate.annotations.SQLRestriction;
 
 @Entity
 @Table(name = "vets")
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 @SQLDelete(sql = "UPDATE vets SET active = false WHERE user_id = ?")
 @SQLRestriction("active = true")
 public class Vet {
   @Id
-
   @Column(name = "user_id")
   private Long userId;
 
@@ -20,12 +23,11 @@ public class Vet {
   @MapsId
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
-  
+
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "clinic_id")
   private Clinic clinic;
 
-}
   @Column(name = "first_name", nullable = false)
   private String firstName;
 

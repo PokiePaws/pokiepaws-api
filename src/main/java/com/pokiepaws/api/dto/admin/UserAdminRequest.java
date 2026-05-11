@@ -16,23 +16,23 @@ import lombok.Setter;
 @AllArgsConstructor
 public class UserAdminRequest {
 
-    @NotBlank private String firstName;
+  @NotBlank private String firstName;
 
-    @NotBlank private String lastName;
+  @NotBlank private String lastName;
 
-    @NotBlank @Email private String email;
+  @NotBlank @Email private String email;
 
-    private String password;
+  private String password;
 
-    @NotNull private String role;
+  @NotNull private String role;
 
-    private Long clinicId;
+  private Long clinicId;
 
-    @Builder.Default private boolean active = true;
+  @Builder.Default private boolean active = true;
 
-    private String npwz;
+  private String npwz;
 
-    private String phone;
+  private String phone;
 
-    private String specialization;
+  private String specialization;
 }

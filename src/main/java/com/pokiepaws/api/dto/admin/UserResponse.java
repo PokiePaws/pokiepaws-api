@@ -7,18 +7,18 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class UserResponse {
-    private Long id;
-    private String email;
-    private String role;
-    private boolean active;
-    private boolean emailVerified;
+  private Long id;
+  private String email;
+  private String role;
+  private boolean active;
+  private boolean emailVerified;
 
-    public static UserResponse from(User user) {
-        return new UserResponse(
-                user.getId(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.isActive(),
-                user.isEmailVerified());
-    }
+  public static UserResponse from(User user) {
+    return new UserResponse(
+        user.getId(),
+        user.getEmail(),
+        user.getRole().name(),
+        user.isActive(),
+        user.isEmailVerified());
+  }
 }
