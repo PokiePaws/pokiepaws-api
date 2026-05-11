@@ -2,7 +2,6 @@ package com.pokiepaws.api.repositories;
 
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.models.VisitStatus;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -44,7 +43,8 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
 
   List<Visit> findAllByClinicId(Long clinicId);
 
-  List<Visit> findAllByClinicIdAndStartsAtBetween(Long clinicId, LocalDateTime from, LocalDateTime to);
+  List<Visit> findAllByClinicIdAndStartsAtBetween(
+      Long clinicId, LocalDateTime from, LocalDateTime to);
 
   List<Visit> findAllByStatus(VisitStatus status);
 }
