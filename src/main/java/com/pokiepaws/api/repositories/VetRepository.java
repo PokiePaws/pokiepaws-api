@@ -1,12 +1,10 @@
 package com.pokiepaws.api.repositories;
 
 import com.pokiepaws.api.models.Vet;
-<<<<<<< HEAD
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface VetRepository extends JpaRepository<Vet, Long> {
 }
-=======
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -21,4 +19,3 @@ public interface VetRepository extends JpaRepository<Vet, Long> {
 
   List<Vet> findAllByClinicId(Long clinicId);
 }
->>>>>>> 4e343b6 (Merge fix)

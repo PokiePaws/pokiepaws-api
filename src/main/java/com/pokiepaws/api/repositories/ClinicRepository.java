@@ -1,12 +1,10 @@
 package com.pokiepaws.api.repositories;
 
 import com.pokiepaws.api.models.Clinic;
-<<<<<<< HEAD
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface ClinicRepository extends JpaRepository<Clinic, Long> {
 }
-=======
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -16,4 +14,3 @@ public interface ClinicRepository extends JpaRepository<Clinic, Long> {
 
   List<Clinic> findAllByCity(String city);
 }
->>>>>>> 4e343b6 (Merge fix)

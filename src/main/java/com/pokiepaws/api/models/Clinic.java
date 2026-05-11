@@ -12,7 +12,6 @@ public class Clinic {
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
-<<<<<<< HEAD
 
   private String city;
 
@@ -21,7 +20,6 @@ public class Clinic {
 
   private String email;
 
-=======
   @Column(name = "clinic_name", nullable = false)
   private String clinicName;
 
@@ -62,4 +60,3 @@ public class Clinic {
   @Column(nullable = false)
   private boolean active = true;
 }
->>>>>>> 4e343b6 (Merge fix)

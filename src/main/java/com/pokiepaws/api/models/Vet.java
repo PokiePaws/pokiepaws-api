@@ -12,9 +12,7 @@ import org.hibernate.annotations.SQLRestriction;
 @SQLRestriction("active = true")
 public class Vet {
   @Id
-<<<<<<< HEAD
 
-=======
   @Column(name = "user_id")
   private Long userId;
 
@@ -22,16 +20,12 @@ public class Vet {
   @MapsId
   @JoinColumn(name = "user_id", nullable = false)
   private User user;
->>>>>>> 4e343b6 (Merge fix)
-
+  
   @ManyToOne(fetch = FetchType.LAZY)
   @JoinColumn(name = "clinic_id")
   private Clinic clinic;
 
-<<<<<<< HEAD
-
 }
-=======
   @Column(name = "first_name", nullable = false)
   private String firstName;
 
@@ -51,4 +45,3 @@ public class Vet {
   @Column(name = "active", nullable = false)
   private boolean active = true;
 }
->>>>>>> 4e343b6 (Merge fix)

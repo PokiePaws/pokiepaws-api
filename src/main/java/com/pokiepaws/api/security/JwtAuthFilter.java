@@ -29,18 +29,17 @@ public class JwtAuthFilter extends OncePerRequestFilter {
       @NonNull FilterChain filterChain)
       throws ServletException, IOException {
 
-    String authHeader = request.getHeader("Authorization");
+    final String authHeader = request.getHeader("Authorization");
 
     if (authHeader == null || !authHeader.startsWith("Bearer ")) {
       filterChain.doFilter(request, response);
       return;
     }
 
-    String token = authHeader.substring(7);
-    String email = jwtService.extractEmail(token);
+    final String token = authHeader.substring(7);
 
-    if (email != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-      UserDetails userDetails = userDetailsService.loadUserByUsername(email);
+    try {
+      final String email = jwtService.extractEmail(token);
 
       if (jwtService.isTokenValid(token, userDetails)) {
         var authorize =
@@ -49,11 +48,24 @@ public class JwtAuthFilter extends OncePerRequestFilter {
         UsernamePasswordAuthenticationToken authToken =
             new UsernamePasswordAuthenticationToken(userDetails, null, authorize);
 
-        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-        SecurityContextHolder.getContext().setAuthentication(authToken);
-      }
-    }
+        if (jwtService.isTokenValid(token, userDetails)) {
+          var authorities =
+              jwtService.extractRoles(token).stream().map(SimpleGrantedAuthority::new).toList();
 
+          UsernamePasswordAuthenticationToken authToken =
+              new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
+
+          authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+          SecurityContextHolder.getContext().setAuthentication(authToken);
+        }
+      }
+    } catch (RuntimeException ex) {
+      SecurityContextHolder.clearContext();
+      response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+      response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+      response.getWriter().write("{\"message\":\"Invalid or expired JWT\"}");
+      return;
+    }
     filterChain.doFilter(request, response);
   }
 }
