@@ -1,13 +1,15 @@
 package com.pokiepaws.api.services;
 
-import com.pokiepaws.api.dto.clinic.ClinicResponse;
 import com.pokiepaws.api.dto.vet.VetResponse;
 import com.pokiepaws.api.dto.visit.AvailableSlotsResponse;
-import com.pokiepaws.api.models.*;
+import com.pokiepaws.api.models.Clinic;
+import com.pokiepaws.api.models.VisitStatus;
 import com.pokiepaws.api.repositories.ClinicRepository;
 import com.pokiepaws.api.repositories.VetRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -28,95 +30,90 @@ public class ClinicService {
   private final VetRepository vetRepository;
   private final VisitRepository visitRepository;
 
-  // ─────────────────────────────────────────────
-  // Istniejące metody — zachowane bez zmian
-  // ─────────────────────────────────────────────
-
-  public Clinic save(Clinic clinic) {
-    return clinicRepository.save(clinic);
+  public List<Clinic> getAll() {
+    return clinicRepository.findAll();
   }
-
-  public void delete(Long id) {
-    clinicRepository.deleteById(id);
-  }
-
-  // ─────────────────────────────────────────────
-  // Nowe metody zwracające DTO
-  // ─────────────────────────────────────────────
 
   @Transactional(readOnly = true)
-  public List<ClinicResponse> getAllAsDto() {
-    return clinicRepository.findAll().stream()
+  public List<Clinic> getAllAsDto() {
+    return clinicRepository.findAll().stream().filter(Clinic::isActive).toList();
+  }
+
+  public Clinic getById(Long id) {
+    return clinicRepository
+        .findById(id)
+        .orElseThrow(() -> new RuntimeException("Clinic not found"));
+  }
+
+  public List<Clinic> getByCity(String city) {
+    return clinicRepository.findAllByCity(city);
+  }
+
+  @Transactional(readOnly = true)
+  public List<Clinic> getByCityAsDto(String city) {
+    return clinicRepository.findAllByCity(city).stream().filter(Clinic::isActive).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public Clinic getByIdAsDto(Long id) {
+    return clinicRepository
+        .findById(id)
         .filter(Clinic::isActive)
-        .map(ClinicService::toResponse)
-        .toList();
-  }
-
-  @Transactional(readOnly = true)
-  public ClinicResponse getByIdAsDto(Long id) {
-    return toResponse(
-        clinicRepository
-            .findById(id)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found")));
-  }
-
-  @Transactional(readOnly = true)
-  public List<ClinicResponse> getByCityAsDto(String city) {
-    return clinicRepository.findAllByCity(city).stream()
-        .filter(Clinic::isActive)
-        .map(ClinicService::toResponse)
-        .toList();
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));
   }
 
   @Transactional(readOnly = true)
   public List<VetResponse> getVetsByClinicId(Long clinicId) {
-    clinicRepository
-        .findById(clinicId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));
-
+    getByIdAsDto(clinicId);
     return vetRepository.findAllByClinicId(clinicId).stream()
-        .map(ClinicService::toVetResponse)
+        .map(
+            vet ->
+                VetResponse.builder()
+                    .id(vet.getUserId())
+                    .email(vet.getUser() != null ? vet.getUser().getEmail() : null)
+                    .firstName(vet.getFirstName())
+                    .lastName(vet.getLastName())
+                    .phone(vet.getPhone())
+                    .npwz(vet.getNpwz())
+                    .specialization(vet.getSpecialization())
+                    .clinicName(vet.getClinic() != null ? vet.getClinic().getClinicName() : null)
+                    .build())
         .toList();
   }
 
   @Transactional(readOnly = true)
   public AvailableSlotsResponse getAvailableSlots(Long clinicId, Long vetUserId, LocalDate date) {
-
-    clinicRepository
-        .findById(clinicId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));
-
-    Vet vet =
+    Clinic clinic = getByIdAsDto(clinicId);
+    var vet =
         vetRepository
             .findById(vetUserId)
             .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vet not found"));
 
-    if (vet.getClinic() == null || !vet.getClinic().getId().equals(clinicId)) {
+    if (vet.getClinic() == null || !vet.getClinic().getId().equals(clinic.getId())) {
       throw new ResponseStatusException(
           HttpStatus.BAD_REQUEST, "Vet does not belong to this clinic");
     }
 
     LocalDateTime dayStart = date.atTime(WORK_START);
     LocalDateTime dayEnd = date.atTime(WORK_END);
+    var visits = visitRepository.findAllByVetUserIdAndStartsAtBetween(vetUserId, dayStart, dayEnd);
 
-    // pobierz zajęte sloty (bez CANCELLED)
-    List<LocalDateTime> taken =
-        visitRepository.findAllByVetUserIdAndStartsAtBetween(vetUserId, dayStart, dayEnd).stream()
-            .filter(v -> v.getStatus() != VisitStatus.CANCELLED)
-            .map(Visit::getStartsAt)
-            .toList();
-
-    // wygeneruj dostępne sloty
     List<LocalDateTime> available = new ArrayList<>();
-    LocalDateTime slot = dayStart;
-    LocalDateTime now = LocalDateTime.now();
-
-    while (!slot.plusMinutes(SLOT_MINUTES).isAfter(dayEnd)) {
-      if (!taken.contains(slot) && slot.isAfter(now)) {
-        available.add(slot);
+    for (LocalDateTime slotStart = dayStart;
+        !slotStart.plusMinutes(SLOT_MINUTES).isAfter(dayEnd);
+        slotStart = slotStart.plusMinutes(SLOT_MINUTES)) {
+      LocalDateTime slotEnd = slotStart.plusMinutes(SLOT_MINUTES);
+      LocalDateTime finalSlotStart = slotStart;
+      boolean overlaps =
+          visits.stream()
+              .filter(visit -> visit.getStatus() != VisitStatus.CANCELLED)
+              .anyMatch(
+                  visit ->
+                      finalSlotStart.isBefore(visit.getEndsAt())
+                          && slotEnd.isAfter(visit.getStartsAt()));
+      if (!overlaps) {
+        available.add(slotStart);
       }
-      slot = slot.plusMinutes(SLOT_MINUTES);
     }
 
     return AvailableSlotsResponse.builder()
@@ -130,36 +127,11 @@ public class ClinicService {
         .build();
   }
 
-  // ─────────────────────────────────────────────
-  // Mappers
-  // ─────────────────────────────────────────────
-
-  static ClinicResponse toResponse(Clinic c) {
-    return ClinicResponse.builder()
-        .id(c.getId())
-        .clinicName(c.getClinicName())
-        .street(c.getStreet())
-        .houseNumber(c.getHouseNumber())
-        .apartmentNumber(c.getApartmentNumber())
-        .postalCode(c.getPostalCode())
-        .city(c.getCity())
-        .country(c.getCountry())
-        .phone(c.getPhone())
-        .email(c.getEmail())
-        .workingHours(c.getWorkingHours())
-        .build();
+  public Clinic save(Clinic clinic) {
+    return clinicRepository.save(clinic);
   }
 
-  static VetResponse toVetResponse(Vet v) {
-    return VetResponse.builder()
-        .id(v.getUserId())
-        .email(v.getUser().getEmail())
-        .firstName(v.getFirstName())
-        .lastName(v.getLastName())
-        .phone(v.getPhone())
-        .npwz(v.getNpwz())
-        .specialization(v.getSpecialization())
-        .clinicName(v.getClinic() != null ? v.getClinic().getClinicName() : null)
-        .build();
+  public void delete(Long id) {
+    clinicRepository.deleteById(id);
   }
 }

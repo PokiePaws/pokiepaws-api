@@ -29,16 +29,4 @@ public class PrescriptionController {
   public PrescriptionResponse get(@PathVariable("id") Long visitId) {
     return prescriptionService.getForVisit(visitId);
   }
-
-  @GetMapping("/{id}/prescription/vet")
-  @PreAuthorize("hasAnyRole('VET','ADMIN')")
-  public PrescriptionResponse getForVet(@PathVariable("id") Long visitId) {
-    return prescriptionService.getForVisitForCurrentVetOrAdmin(visitId);
-  }
-
-  @GetMapping("/{id}/prescription/owner")
-  @PreAuthorize("hasRole('OWNER')")
-  public PrescriptionResponse getForOwner(@PathVariable("id") Long visitId) {
-    return prescriptionService.getForVisitForCurrentOwner(visitId);
-  }
 }

@@ -1,9 +1,9 @@
 package com.pokiepaws.api.dto.vet;
 
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
-@Value
+@Data
 @Builder
 public class VetResponse {
   Long id;

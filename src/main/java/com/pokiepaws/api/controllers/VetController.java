@@ -1,12 +1,10 @@
 package com.pokiepaws.api.controllers;
 
-import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -44,11 +42,5 @@ public class VetController {
   @DeleteMapping("/{id}")
   public void delete(@PathVariable Long id) {
     vetService.delete(id);
-  }
-
-  @GetMapping("/clinic/{clinicId}/list")
-  @PreAuthorize("hasRole('OWNER')")
-  public List<VetListResponse> getByClinicList(@PathVariable Long clinicId) {
-    return vetService.getListItemsByClinic(clinicId);
   }
 }

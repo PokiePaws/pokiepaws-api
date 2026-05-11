@@ -6,4 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WarehouseWorkerRepository extends JpaRepository<WarehouseWorker, Long> {
   Optional<WarehouseWorker> findByUser_Email(String email);
+
+  Optional<WarehouseWorker> findByUserId(Long userId);
 }

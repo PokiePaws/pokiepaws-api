@@ -10,7 +10,6 @@ import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -37,6 +36,20 @@ public class VetService {
 
   public List<Vet> getByClinic(Long clinicId) {
     return vetRepository.findAllByClinicId(clinicId);
+  }
+
+  public List<VetListResponse> getListItemsByClinic(Long clinicId) {
+    return vetRepository.findAllByClinicId(clinicId).stream()
+        .map(
+            vet ->
+                VetListResponse.builder()
+                    .userId(vet.getUserId())
+                    .firstName(vet.getFirstName())
+                    .lastName(vet.getLastName())
+                    .npwz(vet.getNpwz())
+                    .specialization(vet.getSpecialization())
+                    .build())
+        .toList();
   }
 
   @Transactional
@@ -91,20 +104,5 @@ public class VetService {
           vet.getFirstName(),
           vet.getLastName());
     }
-  }
-
-  @Transactional(readOnly = true)
-  public List<VetListResponse> getListItemsByClinic(Long clinicId) {
-    return vetRepository.findAllByClinicId(clinicId).stream()
-        .map(
-            v ->
-                VetListResponse.builder()
-                    .userId(v.getUserId())
-                    .firstName(v.getFirstName())
-                    .lastName(v.getLastName())
-                    .npwz(v.getNpwz())
-                    .specialization(v.getSpecialization())
-                    .build())
-        .collect(Collectors.toList());
   }
 }
