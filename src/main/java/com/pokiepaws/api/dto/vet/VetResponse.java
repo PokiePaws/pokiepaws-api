@@ -6,12 +6,12 @@ import lombok.Data;
 @Data
 @Builder
 public class VetResponse {
-  private Long id;
-  private String email;
-  private String firstName;
-  private String lastName;
-  private String phone;
-  private String npwz;
-  private String specialization;
-  private String clinicName;
+  Long id;
+  String email;
+  String firstName;
+  String lastName;
+  String phone;
+  String npwz;
+  String specialization;
+  String clinicName;
 }

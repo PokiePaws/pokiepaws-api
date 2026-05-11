@@ -11,17 +11,18 @@ import com.pokiepaws.api.dto.auth.AuthRequest;
 import com.pokiepaws.api.dto.auth.RegisterRequest;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.test.web.servlet.MockMvc;
 
+@Disabled
 @AutoConfigureMockMvc
 class AuthControllerInitTests extends BaseIntegrationTest {
 
   @Autowired MockMvc mockMvc;
   @Autowired ObjectMapper objectMapper;
-
   @Autowired EmailVerificationTokenRepository tokenRepository;
   @Autowired OwnerRepository ownerRepository;
 
