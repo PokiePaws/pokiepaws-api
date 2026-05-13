@@ -7,12 +7,17 @@ import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
+@ConditionalOnProperty(
+    name = "app.visit-reminders.enabled",
+    havingValue = "true",
+    matchIfMissing = true)
 public class VisitReminderScheduler {
 
   private final VisitRepository visitRepository;

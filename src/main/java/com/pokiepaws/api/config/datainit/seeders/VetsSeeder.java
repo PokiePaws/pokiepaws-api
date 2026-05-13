@@ -28,7 +28,7 @@ public class VetsSeeder implements Seeder {
   private static final String CLINIC_WARSAW = "PokiePaws Warszawa";
   private static final String CLINIC_CRACOW = "PokiePaws Kraków";
 
-  @Value("${DEAFULT-VET-PASSWORD:Vet1234!}")
+  @Value("${DEFAULT_VET_PASSWORD:Vet1234!}")
   private String defaultVetPassword;
 
   private final UserRepository userRepository;

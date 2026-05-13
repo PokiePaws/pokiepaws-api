@@ -22,15 +22,21 @@ services:
     build: .
     container_name: pokiepaws-api
     ports:
-      - "${APP_PORT}:${APP_PORT}"
+      - "${APP_PORT}:${SERVER_PORT}"
     environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-local}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/${POSTGRES_DB}
       SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
       SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
       SERVER_PORT: ${SERVER_PORT}
       MAIL_HOST: ${MAIL_HOST}
       MAIL_PORT: ${MAIL_PORT}
-      MAILPIT_SMTP_PORT: ${MAILPIT_SMTP_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_SMTP_AUTH: ${MAIL_SMTP_AUTH:-false}
+      MAIL_SMTP_STARTTLS: ${MAIL_SMTP_STARTTLS:-false}
+      MAIL_DEBUG: ${MAIL_DEBUG:-false}
+      MAIL_FROM: ${MAIL_FROM:-PokiePaws <no-reply@pokiepaws.local>}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION: ${JWT_EXPIRATION}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
@@ -41,13 +47,24 @@ services:
       FRONTEND_URL: ${FRONTEND_URL}
       FIREBASE_SERVICE_ACCOUNT_PATH: ${FIREBASE_SERVICE_ACCOUNT_PATH:-}
       FIREBASE_SERVICE_ACCOUNT_JSON_BASE64: ${FIREBASE_SERVICE_ACCOUNT_JSON_BASE64:-}
+      DATA_INIT_ENABLED: ${DATA_INIT_ENABLED:-true}
+      VISIT_REMINDERS_ENABLED: ${VISIT_REMINDERS_ENABLED:-true}
       VISIT_REMINDERS_SCAN_DELAY_MS: ${VISIT_REMINDERS_SCAN_DELAY_MS:-60000}
       VISIT_SLOT_MINUTES: ${VISIT_SLOT_MINUTES:-30}
       VISIT_WORK_START: ${VISIT_WORK_START:-09:00}
       VISIT_WORK_END: ${VISIT_WORK_END:-17:00}
+      DEFAULT_OWNER_PASSWORD: ${DEFAULT_OWNER_PASSWORD:-Owner1234!}
+      DEFAULT_VET_PASSWORD: ${DEFAULT_VET_PASSWORD:-Vet1234!}
+      DEFAULT_WORKER_PASSWORD: ${DEFAULT_WORKER_PASSWORD:-Worker1234!}
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c '</dev/tcp/localhost/${SERVER_PORT}'"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - pokiepaws-net
 
