@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pokiepaws.api.config.properties.VisitScheduleProperties;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.models.Vet;
@@ -36,7 +37,9 @@ class ClinicServiceTest {
 
   @BeforeEach
   void setUp() {
-    clinicService = new ClinicService(clinicRepository, vetRepository, visitRepository);
+    clinicService =
+        new ClinicService(
+            clinicRepository, vetRepository, visitRepository, new VisitScheduleProperties());
   }
 
   @Test
@@ -151,7 +154,8 @@ class ClinicServiceTest {
             ex -> {
               ResponseStatusException rse = (ResponseStatusException) ex;
               assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(rse.getReason()).isEqualTo("Vet does not belong to this clinic");
+              assertThat(rse.getReason())
+                  .isEqualTo("Selected vet does not belong to selected clinic");
             });
   }
 

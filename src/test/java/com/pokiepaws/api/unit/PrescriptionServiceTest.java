@@ -13,7 +13,10 @@ import com.pokiepaws.api.repositories.PrescriptionRepository;
 import com.pokiepaws.api.repositories.ProductRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
+import com.pokiepaws.api.services.OwnerNotificationService;
 import com.pokiepaws.api.services.PrescriptionService;
+import com.pokiepaws.api.services.RealtimeNotificationService;
+import com.pokiepaws.api.validators.PrescriptionValidator;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -42,8 +45,11 @@ class PrescriptionServiceTest {
   @Mock ProductRepository productRepository;
   @Mock ClinicStockItemRepository clinicStockItemRepository;
   @Mock UserRepository userRepository;
+  @Mock RealtimeNotificationService realtimeNotificationService;
+  @Mock OwnerNotificationService ownerNotificationService;
 
   private PrescriptionService prescriptionService;
+  private PrescriptionValidator prescriptionValidator;
   private Clinic clinic;
   private Vet vet;
   private Visit visit;
@@ -53,6 +59,7 @@ class PrescriptionServiceTest {
   @BeforeEach
   void setUp() {
     Clock clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
+    prescriptionValidator = new PrescriptionValidator(prescriptionRepository);
     prescriptionService =
         new PrescriptionService(
             clock,
@@ -60,7 +67,10 @@ class PrescriptionServiceTest {
             prescriptionRepository,
             productRepository,
             clinicStockItemRepository,
-            userRepository);
+            userRepository,
+            realtimeNotificationService,
+            ownerNotificationService,
+            prescriptionValidator);
 
     clinic = Clinic.builder().id(30L).clinicName("PokiePaws Legnica").build();
     vet = Vet.builder().userId(40L).clinic(clinic).firstName("John").lastName("Smith").build();

@@ -35,4 +35,9 @@ public class VetVisitsController {
       @PathVariable Long id, @RequestBody UpdateVisitMedicalDataRequest req) {
     return visitService.updateMedicalData(id, req);
   }
+
+  @PostMapping("/{id}/confirm")
+  public VisitResponse confirm(@PathVariable Long id) {
+    return visitService.confirmForCurrentVet(id);
+  }
 }

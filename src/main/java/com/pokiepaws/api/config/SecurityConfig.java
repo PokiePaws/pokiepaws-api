@@ -45,6 +45,8 @@ public class SecurityConfig {
                         "/webjars/**",
                         "/swagger-ui/index.html",
                         "/swagger-ui/swagger-initializer.js",
+                        "/ws/**",
+                        "/ws-native/**",
                         "/api/clinics",
                         "/api/clinics/**")
                     .permitAll()

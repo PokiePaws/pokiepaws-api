@@ -3,25 +3,22 @@ package com.pokiepaws.api.services;
 import com.pokiepaws.api.dto.visit.CreateVisitRequest;
 import com.pokiepaws.api.dto.visit.UpdateVisitMedicalDataRequest;
 import com.pokiepaws.api.dto.visit.VisitResponse;
+import com.pokiepaws.api.exceptions.ApiErrorMessage;
+import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.*;
+import com.pokiepaws.api.validators.VisitValidator;
 import java.time.*;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
 public class VisitService {
-
-  private static final int SLOT_MINUTES = 30;
-  private static final LocalTime WORK_START = LocalTime.of(9, 0);
-  private static final LocalTime WORK_END = LocalTime.of(17, 0);
 
   private final VisitRepository visitRepository;
   private final AnimalRepository animalRepository;
@@ -29,14 +26,17 @@ public class VisitService {
   private final VetRepository vetRepository;
   private final OwnerRepository ownerRepository;
   private final UserRepository userRepository;
-  private static final String VISIT_NOT_FOUND_MESSAGE = "Visit not found";
+  private final RealtimeNotificationService realtimeNotificationService;
+  private final OwnerNotificationService ownerNotificationService;
+  private final VisitValidator visitValidator;
+  private final Clock clock;
 
   private Long getCurrentUserIdOrThrow() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
     return userRepository
         .findByEmail(email)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"))
+        .orElseThrow(() -> ApiException.unauthorized(ApiErrorMessage.USER_NOT_FOUND))
         .getId();
   }
 
@@ -47,8 +47,7 @@ public class VisitService {
   private Owner getOwnerByEmailOrThrow(String email) {
     return ownerRepository
         .findByUserEmail(email)
-        .orElseThrow(
-            () -> new ResponseStatusException(HttpStatus.FORBIDDEN, "Owner profile not found"));
+        .orElseThrow(() -> ApiException.forbidden(ApiErrorMessage.OWNER_PROFILE_NOT_FOUND));
   }
 
   @Transactional
@@ -58,46 +57,23 @@ public class VisitService {
     Animal animal =
         animalRepository
             .findByIdAndOwnerAndActiveTrue(req.getAnimalId(), owner)
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.FORBIDDEN, "You are not the owner of this animal"));
+            .orElseThrow(() -> ApiException.forbidden(ApiErrorMessage.ANIMAL_NOT_OWNED));
 
     Clinic clinic =
         clinicRepository
             .findById(req.getClinicId())
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Clinic not found"));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.CLINIC_NOT_FOUND));
 
     Vet vet =
         vetRepository
             .findById(req.getVetUserId())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Vet not found"));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VET_NOT_FOUND));
 
-    if (vet.getClinic() == null || !vet.getClinic().getId().equals(clinic.getId())) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Selected vet does not belong to selected clinic");
-    }
+    visitValidator.validateVetBelongsToClinic(vet, clinic);
+    visitValidator.validateRequestedSlot(vet, req.getStartsAt());
 
     LocalDateTime start = req.getStartsAt();
-
-    if (start.getMinute() % SLOT_MINUTES != 0 || start.getSecond() != 0 || start.getNano() != 0) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Start time must align to 30-minute slots");
-    }
-
-    LocalDateTime end = start.plusMinutes(SLOT_MINUTES);
-    LocalDateTime dayStart = start.toLocalDate().atTime(WORK_START);
-    LocalDateTime dayEnd = start.toLocalDate().atTime(WORK_END);
-
-    if (start.isBefore(dayStart) || end.isAfter(dayEnd)) {
-      throw new ResponseStatusException(
-          HttpStatus.BAD_REQUEST, "Selected time is outside working hours");
-    }
-
-    if (!visitRepository.findOverlappingVisits(vet.getUserId(), start, end).isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.CONFLICT, "Selected slot is already taken");
-    }
+    LocalDateTime end = start.plusMinutes(visitValidator.slotMinutes());
 
     Visit visit =
         Visit.builder()
@@ -111,7 +87,10 @@ public class VisitService {
             .used(false)
             .build();
 
-    return toResponse(visitRepository.save(visit));
+    Visit saved = visitRepository.save(visit);
+
+    realtimeNotificationService.publishVisitCreated(saved);
+    return toResponse(saved);
   }
 
   @Transactional(readOnly = true)
@@ -121,12 +100,9 @@ public class VisitService {
     Visit visit =
         visitRepository
             .findById(visitId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, VISIT_NOT_FOUND_MESSAGE));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
 
-    if (!visit.getAnimal().getOwner().getUserId().equals(owner.getUserId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-    }
+    visitValidator.validateCurrentOwnerCanAccessVisit(visit, owner);
 
     return toResponse(visit);
   }
@@ -137,10 +113,7 @@ public class VisitService {
 
     animalRepository
         .findByIdAndOwnerAndActiveTrue(animalId, owner)
-        .orElseThrow(
-            () ->
-                new ResponseStatusException(
-                    HttpStatus.FORBIDDEN, "You are not the owner of this animal"));
+        .orElseThrow(() -> ApiException.forbidden(ApiErrorMessage.ANIMAL_NOT_OWNED));
 
     return visitRepository.findAllByAnimalId(animalId).stream()
         .map(VisitService::toResponse)
@@ -153,7 +126,7 @@ public class VisitService {
 
     return visitRepository
         .findAllByAnimalOwnerUserIdAndStartsAtAfterOrderByStartsAtAsc(
-            owner.getUserId(), LocalDateTime.now())
+            owner.getUserId(), LocalDateTime.now(clock))
         .stream()
         .map(VisitService::toResponse)
         .toList();
@@ -161,9 +134,7 @@ public class VisitService {
 
   @Transactional(readOnly = true)
   public List<VisitResponse> getMyVisitsInRange(LocalDate from, LocalDate to) {
-    if (from.isAfter(to)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'from' must be <= 'to'");
-    }
+    visitValidator.validateDateRange(from, to);
 
     Owner owner = getOwnerByEmailOrThrow(getCurrentEmailOrThrow());
 
@@ -176,24 +147,42 @@ public class VisitService {
   }
 
   @Transactional
+  public VisitResponse confirmForCurrentVet(Long visitId) {
+    Long vetUserId = getCurrentUserIdOrThrow();
+
+    Visit visit =
+        visitRepository
+            .findById(visitId)
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
+
+    visitValidator.validateCurrentVetAssignedToVisit(visit, vetUserId);
+    visitValidator.validateVisitCanBeConfirmed(visit);
+
+    visit.setStatus(VisitStatus.CONFIRMED);
+    Visit saved = visitRepository.save(visit);
+
+    ownerNotificationService.visitConfirmed(saved);
+
+    return toResponse(saved);
+  }
+
+  @Transactional
   public VisitResponse cancelForCurrentOwner(Long visitId) {
     Owner owner = getOwnerByEmailOrThrow(getCurrentEmailOrThrow());
 
     Visit visit =
         visitRepository
             .findById(visitId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, VISIT_NOT_FOUND_MESSAGE));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
 
-    if (visit.getAnimal() == null
-        || visit.getAnimal().getOwner() == null
-        || !visit.getAnimal().getOwner().getUserId().equals(owner.getUserId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You cannot cancel this visit");
-    }
+    visitValidator.validateCurrentOwnerCanCancelVisit(visit, owner);
 
     if (visit.getStatus() != VisitStatus.CANCELLED) {
       visit.setStatus(VisitStatus.CANCELLED);
       visitRepository.save(visit);
+
+      realtimeNotificationService.publishVisitCancelled(visit);
+      ownerNotificationService.visitCancelled(visit);
     }
 
     return toResponse(visit);
@@ -205,7 +194,7 @@ public class VisitService {
 
     return visitRepository
         .findAllByVetUserIdAndStatusNotAndStartsAtAfterOrderByStartsAtAsc(
-            vetUserId, VisitStatus.CANCELLED, LocalDateTime.now())
+            vetUserId, VisitStatus.CANCELLED, LocalDateTime.now(clock))
         .stream()
         .map(VisitService::toResponse)
         .toList();
@@ -213,9 +202,7 @@ public class VisitService {
 
   @Transactional(readOnly = true)
   public List<VisitResponse> getMyVisitsInRangeForCurrentVet(LocalDate from, LocalDate to) {
-    if (from.isAfter(to)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "'from' must be <= 'to'");
-    }
+    visitValidator.validateDateRange(from, to);
 
     Long vetUserId = getCurrentUserIdOrThrow();
 
@@ -234,22 +221,20 @@ public class VisitService {
     Visit visit =
         visitRepository
             .findById(visitId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, VISIT_NOT_FOUND_MESSAGE));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
 
-    if (visit.getVet() == null || !visit.getVet().getUserId().equals(vetUserId)) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "You are not the vet for this visit");
-    }
-
-    if (visit.getStatus() == VisitStatus.CANCELLED) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cannot update cancelled visit");
-    }
+    visitValidator.validateCurrentVetAssignedToVisit(visit, vetUserId);
+    visitValidator.validateMedicalDataCanBeUpdated(visit);
 
     visit.setDisease(req.getDisease());
     visit.setDiagnosis(req.getDiagnosis());
     visit.setRecommendations(req.getRecommendations());
 
-    return toResponse(visitRepository.save(visit));
+    Visit saved = visitRepository.save(visit);
+    realtimeNotificationService.publishVisitMedicalDataUpdated(saved);
+    ownerNotificationService.visitMedicalDataUpdated(saved);
+
+    return toResponse(saved);
   }
 
   static VisitResponse toResponse(Visit v) {
