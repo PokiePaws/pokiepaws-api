@@ -7,15 +7,24 @@ import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.VisitRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import lombok.RequiredArgsConstructor;
+import java.time.LocalTime;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class VisitValidator {
 
-  private final VisitScheduleProperties visitScheduleProperties;
+  private final int slotMinutes;
+  private final LocalTime workStart;
+  private final LocalTime workEnd;
   private final VisitRepository visitRepository;
+
+  public VisitValidator(
+      VisitScheduleProperties visitScheduleProperties, VisitRepository visitRepository) {
+    this.slotMinutes = visitScheduleProperties.getSlotMinutes();
+    this.workStart = visitScheduleProperties.getWorkStart();
+    this.workEnd = visitScheduleProperties.getWorkEnd();
+    this.visitRepository = visitRepository;
+  }
 
   public void validateVetBelongsToClinic(Vet vet, Clinic clinic) {
     if (vet.getClinic() == null || !vet.getClinic().getId().equals(clinic.getId())) {
@@ -24,14 +33,13 @@ public class VisitValidator {
   }
 
   public void validateRequestedSlot(Vet vet, LocalDateTime start) {
-    int slotMinutes = visitScheduleProperties.getSlotMinutes();
     if (start.getMinute() % slotMinutes != 0 || start.getSecond() != 0 || start.getNano() != 0) {
       throw ApiException.badRequest(ApiErrorMessage.SLOT_ALIGNMENT_INVALID);
     }
 
     LocalDateTime end = start.plusMinutes(slotMinutes);
-    LocalDateTime dayStart = start.toLocalDate().atTime(visitScheduleProperties.getWorkStart());
-    LocalDateTime dayEnd = start.toLocalDate().atTime(visitScheduleProperties.getWorkEnd());
+    LocalDateTime dayStart = start.toLocalDate().atTime(workStart);
+    LocalDateTime dayEnd = start.toLocalDate().atTime(workEnd);
 
     if (start.isBefore(dayStart) || end.isAfter(dayEnd)) {
       throw ApiException.badRequest(ApiErrorMessage.SELECTED_TIME_OUTSIDE_WORKING_HOURS);
@@ -95,6 +103,6 @@ public class VisitValidator {
   }
 
   public int slotMinutes() {
-    return visitScheduleProperties.getSlotMinutes();
+    return slotMinutes;
   }
 }
