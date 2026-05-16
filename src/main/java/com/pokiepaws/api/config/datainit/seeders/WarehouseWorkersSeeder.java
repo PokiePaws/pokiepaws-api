@@ -30,7 +30,7 @@ public class WarehouseWorkersSeeder implements Seeder {
   private final WarehouseWorkerRepository warehouseWorkerRepository;
   private final PasswordEncoder passwordEncoder;
 
-  @Value("${DEAFULT-WORKER-PASSWORD:Worker1234!}")
+  @Value("${DEFAULT_WORKER_PASSWORD:Worker1234!}")
   private String defaultWorkerPassword;
 
   @Override

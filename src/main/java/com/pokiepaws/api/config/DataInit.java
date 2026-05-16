@@ -6,10 +6,12 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 @Component
 @Slf4j
+@ConditionalOnProperty(name = "app.data-init.enabled", havingValue = "true")
 public class DataInit implements ApplicationRunner {
 
   private final List<Seeder> seeders;

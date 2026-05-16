@@ -1,0 +1,10 @@
+package com.pokiepaws.api.dto.realtime;
+
+public enum RealtimeEventType {
+  VISIT_CREATED,
+  VISIT_CANCELLED,
+  VISIT_MEDICAL_DATA_UPDATED,
+  PRESCRIPTION_CREATED,
+  CLINIC_STOCK_UPDATED,
+  ACTIVITY_LOG_CREATED
+}

@@ -55,4 +55,12 @@ public class Visit {
   @Builder.Default
   @Column(name = "used", nullable = false)
   private boolean used = false;
+
+  @Builder.Default
+  @Column(name = "reminder_24h_sent", nullable = false)
+  private boolean reminder24hSent = false;
+
+  @Builder.Default
+  @Column(name = "reminder_1h_sent", nullable = false)
+  private boolean reminder1hSent = false;
 }

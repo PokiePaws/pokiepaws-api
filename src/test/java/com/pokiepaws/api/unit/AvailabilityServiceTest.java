@@ -4,6 +4,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
+import com.pokiepaws.api.config.properties.VisitScheduleProperties;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.models.Visit;
@@ -34,7 +35,8 @@ class AvailabilityServiceTest {
 
   @BeforeEach
   void setUp() {
-    availabilityService = new AvailabilityService(vetRepository, visitRepository);
+    availabilityService =
+        new AvailabilityService(vetRepository, visitRepository, new VisitScheduleProperties());
   }
 
   @Test

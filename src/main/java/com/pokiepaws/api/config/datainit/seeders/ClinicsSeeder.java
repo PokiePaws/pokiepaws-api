@@ -1,6 +1,6 @@
 package com.pokiepaws.api.config.datainit.seeders;
 
-import com.pokiepaws.api.config.datainit.dto.ClinicSeedDto; // Pamiętaj o imporcie!
+import com.pokiepaws.api.config.datainit.dto.ClinicSeedDto;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.repositories.ClinicRepository;
 import lombok.RequiredArgsConstructor;
