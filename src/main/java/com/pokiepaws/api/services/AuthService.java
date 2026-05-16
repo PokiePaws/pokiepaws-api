@@ -6,18 +6,24 @@ import com.pokiepaws.api.dto.auth.RegisterRequest;
 import com.pokiepaws.api.dto.auth.ResetPasswordRequest;
 import com.pokiepaws.api.models.EmailVerificationToken;
 import com.pokiepaws.api.models.ForgotPasswordToken;
+import com.pokiepaws.api.models.MfaToken;
 import com.pokiepaws.api.models.Owner;
+import com.pokiepaws.api.models.RefreshToken;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
 import com.pokiepaws.api.repositories.ForgotPasswordTokenRepository;
+import com.pokiepaws.api.repositories.MfaTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
+import com.pokiepaws.api.repositories.RefreshTokenRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.security.JwtService;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -45,6 +51,13 @@ public class AuthService {
   private static final String TOKEN_EXPIRED = "The token has expired";
   private static final String RESET_TOKEN_INVALID_OR_EXPIRED =
       "The token is invalid or has expired";
+  private static final String ACCOUNT_INACTIVE = "The account is inactive";
+  private static final String MFA_TOKEN_INVALID_OR_EXPIRED =
+      "The 2FA token is invalid or has expired";
+  private static final String MFA_RATE_LIMIT_EXCEEDED =
+      "Too many 2FA requests. Please try again later.";
+  private static final String REFRESH_TOKEN_INVALID_OR_EXPIRED =
+      "The refresh token is invalid or has expired";
 
   private static final String PASSWORD_MIN_LENGTH =
       "The password must be at least 8 characters long";
@@ -66,9 +79,17 @@ public class AuthService {
   private final EmailVerificationTokenRepository tokenRepository;
   private final EmailService emailService;
   private final ForgotPasswordTokenRepository forgotPasswordTokenRepository;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final MfaTokenRepository mfaTokenRepository;
 
   @Value("${app.base-url}")
   private String baseUrl;
+
+  @Value("${app.frontend-url}")
+  private String frontendUrl;
+
+  @Value("${app.refresh-token.expiration-ms:604800000}")
+  private long refreshTokenExpirationMs;
 
   @Transactional
   public void register(RegisterRequest request) {
@@ -124,18 +145,77 @@ public class AuthService {
     if (!user.isEmailVerified()) {
       throw new ResponseStatusException(HttpStatus.FORBIDDEN, PLEASE_VERIFY_EMAIL_FIRST);
     }
+    if (!user.isActive()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, ACCOUNT_INACTIVE);
+    }
 
     authenticationManager.authenticate(
         new UsernamePasswordAuthenticationToken(request.getEmail(), request.getPassword()));
 
-    UserDetails userDetails =
-        org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
-            .password(user.getPassword())
-            .authorities("ROLE_" + user.getRole().name())
-            .build();
+    if (requiresMfa(user)) {
+      createAndSendMfaToken(user);
+      return AuthResponse.mfaRequired(user.getEmail(), user.getRole().name());
+    }
 
-    String token = jwtService.generateToken(userDetails);
-    return new AuthResponse(token, user.getEmail(), user.getRole().name());
+    return issueTokens(user);
+  }
+
+  @Transactional
+  public AuthResponse verifyMfa(String plainToken) {
+    MfaToken mfaToken =
+        mfaTokenRepository.findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now(clock)).stream()
+            .filter(token -> passwordEncoder.matches(plainToken, token.getTokenHash()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.BAD_REQUEST, MFA_TOKEN_INVALID_OR_EXPIRED));
+
+    User user = mfaToken.getUser();
+    if (!user.isActive()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, ACCOUNT_INACTIVE);
+    }
+
+    mfaToken.setUsed(true);
+    mfaTokenRepository.save(mfaToken);
+
+    return issueTokens(user);
+  }
+
+  @Transactional
+  public AuthResponse refresh(String plainRefreshToken) {
+    RefreshToken refreshToken =
+        refreshTokenRepository
+            .findAllByRevokedFalseAndExpiresAtAfter(LocalDateTime.now(clock))
+            .stream()
+            .filter(token -> passwordEncoder.matches(plainRefreshToken, token.getTokenHash()))
+            .findFirst()
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.UNAUTHORIZED, REFRESH_TOKEN_INVALID_OR_EXPIRED));
+
+    User user = refreshToken.getUser();
+    if (!user.isActive()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, ACCOUNT_INACTIVE);
+    }
+
+    refreshToken.setRevoked(true);
+    refreshTokenRepository.save(refreshToken);
+
+    return issueTokens(user);
+  }
+
+  @Transactional
+  public void logout(String plainRefreshToken) {
+    refreshTokenRepository.findAllByRevokedFalseAndExpiresAtAfter(LocalDateTime.now(clock)).stream()
+        .filter(token -> passwordEncoder.matches(plainRefreshToken, token.getTokenHash()))
+        .findFirst()
+        .ifPresent(
+            token -> {
+              token.setRevoked(true);
+              refreshTokenRepository.save(token);
+            });
   }
 
   @Transactional
@@ -218,6 +298,64 @@ public class AuthService {
     byte[] bytes = new byte[36];
     SECURE_RANDOM.nextBytes(bytes);
     return Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+  }
+
+  private boolean requiresMfa(User user) {
+    return user.getRole() == Role.ADMIN || user.getRole() == Role.VET;
+  }
+
+  private void createAndSendMfaToken(User user) {
+    LocalDateTime now = LocalDateTime.now(clock);
+    if (mfaTokenRepository.findAllByUserAndCreatedAtAfter(user, now.minusMinutes(10)).size() >= 3) {
+      throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS, MFA_RATE_LIMIT_EXCEEDED);
+    }
+
+    List<MfaToken> activeTokens = mfaTokenRepository.findAllByUserAndUsedFalse(user);
+    activeTokens.forEach(token -> token.setUsed(true));
+    mfaTokenRepository.saveAll(activeTokens);
+
+    String plainToken = generateSecureToken();
+    MfaToken mfaToken =
+        MfaToken.builder()
+            .user(user)
+            .tokenHash(passwordEncoder.encode(plainToken))
+            .expiresAt(now.plusMinutes(15))
+            .used(false)
+            .createdAt(now)
+            .build();
+    mfaTokenRepository.save(mfaToken);
+
+    emailService.sendMfaLink(user.getEmail(), plainToken, frontendUrl);
+  }
+
+  private AuthResponse issueTokens(User user) {
+    UserDetails userDetails = buildUserDetails(user);
+    String accessToken = jwtService.generateToken(userDetails);
+    String refreshToken = createRefreshToken(user);
+    return AuthResponse.authenticated(
+        accessToken, refreshToken, user.getEmail(), user.getRole().name());
+  }
+
+  private String createRefreshToken(User user) {
+    String plainToken = generateSecureToken();
+    LocalDateTime now = LocalDateTime.now(clock);
+    RefreshToken refreshToken =
+        RefreshToken.builder()
+            .user(user)
+            .tokenHash(passwordEncoder.encode(plainToken))
+            .expiresAt(now.plus(Duration.ofMillis(refreshTokenExpirationMs)))
+            .revoked(false)
+            .createdAt(now)
+            .build();
+    refreshTokenRepository.save(refreshToken);
+    return plainToken;
+  }
+
+  private UserDetails buildUserDetails(User user) {
+    return org.springframework.security.core.userdetails.User.withUsername(user.getEmail())
+        .password(user.getPassword())
+        .authorities("ROLE_" + user.getRole().name())
+        .build();
   }
 
   private void validatePasswordPolicy(String password, String email) {

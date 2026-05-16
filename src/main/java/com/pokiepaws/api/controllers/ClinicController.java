@@ -4,6 +4,7 @@ import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.services.ClinicService;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -29,17 +30,20 @@ public class ClinicController {
   }
 
   @PostMapping
+  @PreAuthorize("hasRole('ADMIN')")
   public Clinic create(@RequestBody Clinic clinic) {
     return clinicService.save(clinic);
   }
 
   @PutMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public Clinic update(@PathVariable Long id, @RequestBody Clinic clinic) {
     clinic.setId(id);
     return clinicService.save(clinic);
   }
 
   @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('ADMIN')")
   public void delete(@PathVariable Long id) {
     clinicService.delete(id);
   }

@@ -48,9 +48,9 @@ public class SecurityConfig {
                         "/swagger-ui/index.html",
                         "/swagger-ui/swagger-initializer.js",
                         "/ws/**",
-                        "/ws-native/**",
-                        "/api/clinics",
-                        "/api/clinics/**")
+                        "/ws-native/**")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/clinics", "/api/clinics/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -69,6 +69,6 @@ public class SecurityConfig {
 
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
+    return new BCryptPasswordEncoder(12);
   }
 }

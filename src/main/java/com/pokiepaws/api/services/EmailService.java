@@ -44,4 +44,22 @@ public class EmailService {
             + "Best regards,\nThe PokiePaws team");
     mailSender.send(message);
   }
+
+  public void sendMfaLink(String to, String token, String frontendUrl) {
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom("noreply@pokiepaws.pl");
+    message.setTo(to);
+    message.setSubject("PokiePaws - Two-step verification");
+    message.setText(
+        "Hello!\n\n"
+            + "Click the link below to finish signing in to PokiePaws:\n\n"
+            + frontendUrl
+            + "/auth/verify?token="
+            + token
+            + "\n\n"
+            + "This link expires in 15 minutes and can be used only once.\n\n"
+            + "If you did not try to sign in, ignore this message.\n\n"
+            + "Best regards,\nThe PokiePaws team");
+    mailSender.send(message);
+  }
 }

@@ -10,12 +10,16 @@ import com.pokiepaws.api.dto.auth.RegisterRequest;
 import com.pokiepaws.api.dto.auth.ResetPasswordRequest;
 import com.pokiepaws.api.models.EmailVerificationToken;
 import com.pokiepaws.api.models.ForgotPasswordToken;
+import com.pokiepaws.api.models.MfaToken;
 import com.pokiepaws.api.models.Owner;
+import com.pokiepaws.api.models.RefreshToken;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
 import com.pokiepaws.api.repositories.ForgotPasswordTokenRepository;
+import com.pokiepaws.api.repositories.MfaTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
+import com.pokiepaws.api.repositories.RefreshTokenRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.security.JwtService;
 import com.pokiepaws.api.services.AuthService;
@@ -59,6 +63,8 @@ class AuthServiceTest {
   @Mock EmailVerificationTokenRepository tokenRepository;
   @Mock EmailService emailService;
   @Mock ForgotPasswordTokenRepository forgotPasswordTokenRepository;
+  @Mock RefreshTokenRepository refreshTokenRepository;
+  @Mock MfaTokenRepository mfaTokenRepository;
 
   private AuthService authService;
 
@@ -76,9 +82,13 @@ class AuthServiceTest {
             authenticationManager,
             tokenRepository,
             emailService,
-            forgotPasswordTokenRepository);
+            forgotPasswordTokenRepository,
+            refreshTokenRepository,
+            mfaTokenRepository);
 
     ReflectionTestUtils.setField(authService, "baseUrl", "${app.base-url}");
+    ReflectionTestUtils.setField(authService, "frontendUrl", "${app.frontend-url}");
+    ReflectionTestUtils.setField(authService, "refreshTokenExpirationMs", 604800000L);
   }
 
   private RegisterRequest validRegister() {
@@ -235,7 +245,7 @@ class AuthServiceTest {
   }
 
   @Test
-  void login_shouldAuthenticateAndReturnJwt_whenVerified() {
+  void login_shouldAuthenticateAndReturnTokens_whenVerifiedOwner() {
     User user =
         User.builder()
             .email("verified@pokiepaws.pl")
@@ -248,13 +258,18 @@ class AuthServiceTest {
     when(userRepository.findByEmail("verified@pokiepaws.pl")).thenReturn(Optional.of(user));
     when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
         .thenReturn(mock(Authentication.class));
-    when(jwtService.generateToken(any(UserDetails.class))).thenReturn("JWT");
+    when(jwtService.generateToken(any(UserDetails.class))).thenReturn("ACCESS");
+    when(passwordEncoder.encode(anyString())).thenReturn("REFRESH_HASH");
+    when(refreshTokenRepository.save(any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
 
     AuthResponse response = authService.login(authRequest("verified@pokiepaws.pl"));
 
-    assertThat(response.getToken()).isEqualTo("JWT");
+    assertThat(response.getAccessToken()).isEqualTo("ACCESS");
+    assertThat(response.getRefreshToken()).isNotBlank();
     assertThat(response.getEmail()).isEqualTo("verified@pokiepaws.pl");
     assertThat(response.getRole()).isEqualTo("OWNER");
+    assertThat(response.isMfaRequired()).isFalse();
 
     verify(authenticationManager)
         .authenticate(
@@ -264,6 +279,155 @@ class AuthServiceTest {
                         && "verified@pokiepaws.pl".equals(token.getPrincipal())
                         && "Owner1234!".equals(token.getCredentials())));
     verify(jwtService).generateToken(any(UserDetails.class));
+    verify(refreshTokenRepository).save(any(RefreshToken.class));
+  }
+
+  @Test
+  void login_shouldReturnMfaRequiredAndSendMfaLink_whenVerifiedAdmin() {
+    User user =
+        User.builder()
+            .email("admin@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.ADMIN)
+            .build();
+
+    when(userRepository.findByEmail("admin@pokiepaws.pl")).thenReturn(Optional.of(user));
+    when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        .thenReturn(mock(Authentication.class));
+    when(mfaTokenRepository.findAllByUserAndCreatedAtAfter(eq(user), any(LocalDateTime.class)))
+        .thenReturn(List.of());
+    when(mfaTokenRepository.findAllByUserAndUsedFalse(user)).thenReturn(List.of());
+    when(passwordEncoder.encode(anyString())).thenReturn("MFA_HASH");
+    when(mfaTokenRepository.save(any(MfaToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    AuthResponse response = authService.login(authRequest("admin@pokiepaws.pl"));
+
+    assertThat(response.isMfaRequired()).isTrue();
+    assertThat(response.getAccessToken()).isNull();
+    assertThat(response.getRefreshToken()).isNull();
+    assertThat(response.getEmail()).isEqualTo("admin@pokiepaws.pl");
+    assertThat(response.getRole()).isEqualTo("ADMIN");
+
+    verify(mfaTokenRepository).save(any(MfaToken.class));
+    verify(emailService)
+        .sendMfaLink(eq("admin@pokiepaws.pl"), anyString(), eq("${app.frontend-url}"));
+    verify(jwtService, never()).generateToken(any(UserDetails.class));
+    verify(refreshTokenRepository, never()).save(any());
+  }
+
+  @Test
+  void login_shouldThrow429_whenMfaRateLimitExceeded() {
+    User user =
+        User.builder()
+            .email("admin@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.ADMIN)
+            .build();
+
+    when(userRepository.findByEmail("admin@pokiepaws.pl")).thenReturn(Optional.of(user));
+    when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        .thenReturn(mock(Authentication.class));
+    when(mfaTokenRepository.findAllByUserAndCreatedAtAfter(eq(user), any(LocalDateTime.class)))
+        .thenReturn(
+            List.of(
+                MfaToken.builder().build(),
+                MfaToken.builder().build(),
+                MfaToken.builder().build()));
+
+    assertThatThrownBy(() -> authService.login(authRequest("admin@pokiepaws.pl")))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(
+            ex -> {
+              ResponseStatusException rse = (ResponseStatusException) ex;
+              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.TOO_MANY_REQUESTS);
+              assertThat(rse.getReason())
+                  .isEqualTo("Too many 2FA requests. Please try again later.");
+            });
+
+    verify(mfaTokenRepository, never()).save(any());
+    verify(emailService, never()).sendMfaLink(anyString(), anyString(), anyString());
+  }
+
+  @Test
+  void verifyMfa_shouldIssueTokensAndMarkMfaTokenUsed_whenTokenValid() {
+    User user =
+        User.builder()
+            .email("vet@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.VET)
+            .build();
+    MfaToken mfaToken =
+        MfaToken.builder()
+            .user(user)
+            .tokenHash("MFA_HASH")
+            .used(false)
+            .expiresAt(LocalDateTime.now(clock).plusMinutes(10))
+            .createdAt(LocalDateTime.now(clock))
+            .build();
+
+    when(mfaTokenRepository.findAllByUsedFalseAndExpiresAtAfter(any(LocalDateTime.class)))
+        .thenReturn(List.of(mfaToken));
+    when(passwordEncoder.matches("plain-mfa-token", "MFA_HASH")).thenReturn(true);
+    when(jwtService.generateToken(any(UserDetails.class))).thenReturn("ACCESS");
+    when(passwordEncoder.encode(anyString())).thenReturn("REFRESH_HASH");
+    when(refreshTokenRepository.save(any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    AuthResponse response = authService.verifyMfa("plain-mfa-token");
+
+    assertThat(response.getAccessToken()).isEqualTo("ACCESS");
+    assertThat(response.getRefreshToken()).isNotBlank();
+    assertThat(response.getEmail()).isEqualTo("vet@pokiepaws.pl");
+    assertThat(response.getRole()).isEqualTo("VET");
+    assertThat(response.isMfaRequired()).isFalse();
+    assertThat(mfaToken.isUsed()).isTrue();
+
+    verify(mfaTokenRepository).save(mfaToken);
+    verify(refreshTokenRepository).save(any(RefreshToken.class));
+  }
+
+  @Test
+  void refresh_shouldRotateRefreshToken_whenTokenValid() {
+    User user =
+        User.builder()
+            .email("owner@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.OWNER)
+            .build();
+    RefreshToken refreshToken =
+        RefreshToken.builder()
+            .user(user)
+            .tokenHash("OLD_HASH")
+            .revoked(false)
+            .expiresAt(LocalDateTime.now(clock).plusDays(1))
+            .createdAt(LocalDateTime.now(clock))
+            .build();
+
+    when(refreshTokenRepository.findAllByRevokedFalseAndExpiresAtAfter(any(LocalDateTime.class)))
+        .thenReturn(List.of(refreshToken));
+    when(passwordEncoder.matches("old-refresh-token", "OLD_HASH")).thenReturn(true);
+    when(jwtService.generateToken(any(UserDetails.class))).thenReturn("NEW_ACCESS");
+    when(passwordEncoder.encode(anyString())).thenReturn("NEW_REFRESH_HASH");
+    when(refreshTokenRepository.save(any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    AuthResponse response = authService.refresh("old-refresh-token");
+
+    assertThat(refreshToken.isRevoked()).isTrue();
+    assertThat(response.getAccessToken()).isEqualTo("NEW_ACCESS");
+    assertThat(response.getRefreshToken()).isNotBlank();
+    assertThat(response.getEmail()).isEqualTo("owner@pokiepaws.pl");
+
+    verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
   }
 
   @Test
