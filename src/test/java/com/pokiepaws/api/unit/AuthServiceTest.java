@@ -22,6 +22,7 @@ import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.RefreshTokenRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.security.JwtService;
+import com.pokiepaws.api.services.ActivityLogService;
 import com.pokiepaws.api.services.AuthService;
 import com.pokiepaws.api.services.EmailService;
 import java.time.Clock;
@@ -40,10 +41,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.server.ResponseStatusException;
@@ -65,6 +66,7 @@ class AuthServiceTest {
   @Mock ForgotPasswordTokenRepository forgotPasswordTokenRepository;
   @Mock RefreshTokenRepository refreshTokenRepository;
   @Mock MfaTokenRepository mfaTokenRepository;
+  @Mock ActivityLogService activityLogService;
 
   private AuthService authService;
 
@@ -84,7 +86,8 @@ class AuthServiceTest {
             emailService,
             forgotPasswordTokenRepository,
             refreshTokenRepository,
-            mfaTokenRepository);
+            mfaTokenRepository,
+            activityLogService);
 
     ReflectionTestUtils.setField(authService, "baseUrl", "${app.base-url}");
     ReflectionTestUtils.setField(authService, "frontendUrl", "${app.frontend-url}");
@@ -204,17 +207,28 @@ class AuthServiceTest {
   }
 
   @Test
-  void login_shouldThrowUsernameNotFound_whenUserMissing() {
+  void login_shouldThrow401_whenUserMissing() {
     AuthRequest request = authRequest("ownernotfound@pokiepaws.pl");
 
     when(userRepository.findByEmail("ownernotfound@pokiepaws.pl")).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> authService.login(request))
-        .isInstanceOf(UsernameNotFoundException.class)
-        .hasMessage("User not found");
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(
+            ex -> {
+              ResponseStatusException rse = (ResponseStatusException) ex;
+              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+              assertThat(rse.getReason()).isEqualTo("Invalid email or password");
+            });
 
     verify(authenticationManager, never()).authenticate(any());
     verify(jwtService, never()).generateToken(any(UserDetails.class));
+    verify(activityLogService)
+        .logFor(
+            eq("ownernotfound@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("Failed login: unknown account"),
+            isNull());
   }
 
   @Test
@@ -280,6 +294,138 @@ class AuthServiceTest {
                         && "Owner1234!".equals(token.getCredentials())));
     verify(jwtService).generateToken(any(UserDetails.class));
     verify(refreshTokenRepository).save(any(RefreshToken.class));
+    verify(activityLogService)
+        .logFor(
+            eq("verified@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("Login successful"),
+            isNull());
+  }
+
+  @Test
+  void login_shouldIncrementFailedAttemptsAndThrow401_whenPasswordInvalid() {
+    User user =
+        User.builder()
+            .email("verified@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.OWNER)
+            .build();
+
+    when(userRepository.findByEmail("verified@pokiepaws.pl")).thenReturn(Optional.of(user));
+    when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        .thenThrow(new BadCredentialsException("bad"));
+
+    assertThatThrownBy(() -> authService.login(authRequest("verified@pokiepaws.pl")))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(
+            ex -> {
+              ResponseStatusException rse = (ResponseStatusException) ex;
+              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+              assertThat(rse.getReason()).isEqualTo("Invalid email or password");
+            });
+
+    assertThat(user.getFailedLoginAttempts()).isEqualTo(1);
+    assertThat(user.getLockedUntil()).isNull();
+    verify(userRepository).save(user);
+    verify(activityLogService)
+        .logFor(
+            eq("verified@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("Failed login"),
+            isNull());
+  }
+
+  @Test
+  void login_shouldLockAccountFor15Minutes_afterFifthFailedAttempt() {
+    User user =
+        User.builder()
+            .email("verified@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.OWNER)
+            .failedLoginAttempts(4)
+            .build();
+
+    when(userRepository.findByEmail("verified@pokiepaws.pl")).thenReturn(Optional.of(user));
+    when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        .thenThrow(new BadCredentialsException("bad"));
+
+    assertThatThrownBy(() -> authService.login(authRequest("verified@pokiepaws.pl")))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(
+            ex -> {
+              ResponseStatusException rse = (ResponseStatusException) ex;
+              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+            });
+
+    assertThat(user.getFailedLoginAttempts()).isEqualTo(5);
+    assertThat(user.getLockedUntil()).isEqualTo(LocalDateTime.now(clock).plusMinutes(15));
+    verify(userRepository).save(user);
+  }
+
+  @Test
+  void login_shouldThrow423_whenAccountIsTemporarilyLocked() {
+    User user =
+        User.builder()
+            .email("verified@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.OWNER)
+            .failedLoginAttempts(5)
+            .lockedUntil(LocalDateTime.now(clock).plusMinutes(5))
+            .build();
+
+    when(userRepository.findByEmail("verified@pokiepaws.pl")).thenReturn(Optional.of(user));
+
+    assertThatThrownBy(() -> authService.login(authRequest("verified@pokiepaws.pl")))
+        .isInstanceOf(ResponseStatusException.class)
+        .satisfies(
+            ex -> {
+              ResponseStatusException rse = (ResponseStatusException) ex;
+              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.LOCKED);
+              assertThat(rse.getReason())
+                  .isEqualTo("The account is temporarily locked. Please try again later.");
+            });
+
+    verify(authenticationManager, never()).authenticate(any());
+    verify(activityLogService)
+        .logFor(
+            eq("verified@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("Failed login: account temporarily locked"),
+            isNull());
+  }
+
+  @Test
+  void login_shouldResetFailedAttempts_whenPasswordValidAfterLockExpired() {
+    User user =
+        User.builder()
+            .email("verified@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.OWNER)
+            .failedLoginAttempts(5)
+            .lockedUntil(LocalDateTime.now(clock).minusMinutes(1))
+            .build();
+
+    when(userRepository.findByEmail("verified@pokiepaws.pl")).thenReturn(Optional.of(user));
+    when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+        .thenReturn(mock(Authentication.class));
+    when(jwtService.generateToken(any(UserDetails.class))).thenReturn("ACCESS");
+    when(passwordEncoder.encode(anyString())).thenReturn("REFRESH_HASH");
+    when(refreshTokenRepository.save(any(RefreshToken.class)))
+        .thenAnswer(invocation -> invocation.getArgument(0));
+
+    authService.login(authRequest("verified@pokiepaws.pl"));
+
+    assertThat(user.getFailedLoginAttempts()).isZero();
+    assertThat(user.getLockedUntil()).isNull();
+    verify(userRepository).save(user);
   }
 
   @Test
@@ -314,6 +460,12 @@ class AuthServiceTest {
     verify(mfaTokenRepository).save(any(MfaToken.class));
     verify(emailService)
         .sendMfaLink(eq("admin@pokiepaws.pl"), anyString(), eq("${app.frontend-url}"));
+    verify(activityLogService)
+        .logFor(
+            eq("admin@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("2FA challenge sent"),
+            isNull());
     verify(jwtService, never()).generateToken(any(UserDetails.class));
     verify(refreshTokenRepository, never()).save(any());
   }
@@ -391,6 +543,12 @@ class AuthServiceTest {
 
     verify(mfaTokenRepository).save(mfaToken);
     verify(refreshTokenRepository).save(any(RefreshToken.class));
+    verify(activityLogService)
+        .logFor(
+            eq("vet@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("2FA verification successful"),
+            isNull());
   }
 
   @Test
@@ -428,6 +586,47 @@ class AuthServiceTest {
     assertThat(response.getEmail()).isEqualTo("owner@pokiepaws.pl");
 
     verify(refreshTokenRepository, times(2)).save(any(RefreshToken.class));
+    verify(activityLogService)
+        .logFor(
+            eq("owner@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("Refresh token rotated"),
+            isNull());
+  }
+
+  @Test
+  void logout_shouldRevokeRefreshTokenAndWriteAuditLog_whenTokenMatches() {
+    User user =
+        User.builder()
+            .email("owner@pokiepaws.pl")
+            .password("HASH")
+            .emailVerified(true)
+            .active(true)
+            .role(Role.OWNER)
+            .build();
+    RefreshToken refreshToken =
+        RefreshToken.builder()
+            .user(user)
+            .tokenHash("REFRESH_HASH")
+            .revoked(false)
+            .expiresAt(LocalDateTime.now(clock).plusDays(1))
+            .createdAt(LocalDateTime.now(clock))
+            .build();
+
+    when(refreshTokenRepository.findAllByRevokedFalseAndExpiresAtAfter(any(LocalDateTime.class)))
+        .thenReturn(List.of(refreshToken));
+    when(passwordEncoder.matches("refresh-token", "REFRESH_HASH")).thenReturn(true);
+
+    authService.logout("refresh-token");
+
+    assertThat(refreshToken.isRevoked()).isTrue();
+    verify(refreshTokenRepository).save(refreshToken);
+    verify(activityLogService)
+        .logFor(
+            eq("owner@pokiepaws.pl"),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq("Logout"),
+            isNull());
   }
 
   @Test

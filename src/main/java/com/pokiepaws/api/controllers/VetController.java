@@ -3,6 +3,7 @@ package com.pokiepaws.api.controllers;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
+import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -32,13 +33,13 @@ public class VetController {
 
   @PostMapping
   @PreAuthorize("hasRole('ADMIN')")
-  public Vet create(@RequestBody VetRequest request) {
+  public Vet create(@Valid @RequestBody VetRequest request) {
     return vetService.save(request);
   }
 
   @PutMapping("/{id}")
   @PreAuthorize("hasRole('ADMIN')")
-  public Vet update(@PathVariable Long id, @RequestBody VetRequest request) {
+  public Vet update(@PathVariable Long id, @Valid @RequestBody VetRequest request) {
     return vetService.update(id, request);
   }
 
