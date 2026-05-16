@@ -1,9 +1,10 @@
 package com.pokiepaws.api.repositories;
 
 import com.pokiepaws.api.models.WarehouseStockItem;
-import java.util.Optional;
+import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WarehouseStockItemRepository extends JpaRepository<WarehouseStockItem, Long> {
-  Optional<WarehouseStockItem> findByWarehouseIdAndProductId(Long warehouseId, Long productId);
+    List<WarehouseStockItem> findAllByWarehouseId(Long warehouseId);
+    List<WarehouseStockItem> findAllByAmountLessThanEqual(int threshold);
 }

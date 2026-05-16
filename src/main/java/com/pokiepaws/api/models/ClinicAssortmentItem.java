@@ -5,38 +5,37 @@ import java.time.LocalDate;
 import lombok.*;
 
 @Entity
-@Table(name = "warehouse_stock_items")
+@Table(name = "clinic_assortment_items")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class WarehouseStockItem {
+public class ClinicAssortmentItem {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
-    @JoinColumn(name = "warehouse_id", nullable = false)
-    private Warehouse warehouse;
+    @JoinColumn(name = "clinic_id", nullable = false)
+    private Clinic clinic;
 
     @Column(nullable = false)
     private String name;
 
-    @Column(name = "assortment_description", columnDefinition = "TEXT")
-    private String assortmentDescription;
+    private int amount;
 
-    private Double price;
-
-    private String unit;
+    @Column(columnDefinition = "TEXT")
+    private String description;
 
     private String category;
 
-    private int amount;
+    @Builder.Default
+    private String status = "PENDING";
+
+    private String unit;
 
     @Column(name = "expiry_date")
     private LocalDate expiryDate;
-
-    private String status;
 }
