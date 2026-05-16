@@ -22,29 +22,34 @@ public class ActivityLogService {
 
   private final ActivityLogRepository activityLogRepository;
   private final Clock clock;
+  private final RealtimeNotificationService realtimeNotificationService;
 
   @Transactional
   public void log(LogType type, String detail, String clinic) {
-    activityLogRepository.save(
-        ActivityLog.builder()
-            .type(type)
-            .userEmail(currentUserEmail())
-            .detail(detail)
-            .clinic(clinic)
-            .time(LocalDateTime.now(clock))
-            .build());
+    ActivityLog saved =
+        activityLogRepository.save(
+            ActivityLog.builder()
+                .type(type)
+                .userEmail(currentUserEmail())
+                .detail(detail)
+                .clinic(clinic)
+                .time(LocalDateTime.now(clock))
+                .build());
+    realtimeNotificationService.publishActivityLogCreated(toDto(saved));
   }
 
   @Transactional
   public void logFor(String userEmail, LogType type, String detail, String clinic) {
-    activityLogRepository.save(
-        ActivityLog.builder()
-            .type(type)
-            .userEmail(userEmail)
-            .detail(detail)
-            .clinic(clinic)
-            .time(LocalDateTime.now(clock))
-            .build());
+    ActivityLog saved =
+        activityLogRepository.save(
+            ActivityLog.builder()
+                .type(type)
+                .userEmail(userEmail)
+                .detail(detail)
+                .clinic(clinic)
+                .time(LocalDateTime.now(clock))
+                .build());
+    realtimeNotificationService.publishActivityLogCreated(toDto(saved));
   }
 
   @Transactional(readOnly = true)

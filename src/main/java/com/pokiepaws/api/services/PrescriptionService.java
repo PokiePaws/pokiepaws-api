@@ -3,18 +3,19 @@ package com.pokiepaws.api.services;
 import com.pokiepaws.api.dto.prescription.CreatePrescriptionRequest;
 import com.pokiepaws.api.dto.prescription.PrescriptionItemResponse;
 import com.pokiepaws.api.dto.prescription.PrescriptionResponse;
+import com.pokiepaws.api.exceptions.ApiErrorMessage;
+import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.*;
 import com.pokiepaws.api.repositories.UserRepository;
+import com.pokiepaws.api.validators.PrescriptionValidator;
 import java.time.Clock;
 import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.server.ResponseStatusException;
 
 @Service
 @RequiredArgsConstructor
@@ -26,36 +27,28 @@ public class PrescriptionService {
   private final ProductRepository productRepository;
   private final ClinicStockItemRepository clinicStockItemRepository;
   private final UserRepository userRepository;
+  private final RealtimeNotificationService realtimeNotificationService;
+  private final OwnerNotificationService ownerNotificationService;
+  private final PrescriptionValidator prescriptionValidator;
 
   @Transactional
   public PrescriptionResponse createForVisit(Long visitId, CreatePrescriptionRequest request) {
     Visit visit =
         visitRepository
             .findById(visitId)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visit not found"));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
+    prescriptionValidator.validatePrescriptionCreationPreconditions(visit, visitId);
 
-    if (prescriptionRepository.existsByVisitId(visitId)) {
-      throw new ResponseStatusException(
-          HttpStatus.CONFLICT, "Prescription already exists for this visit");
-    }
-    if (visit.getVet() == null) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Visit has no assigned vet");
-    }
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
     String email = auth.getName();
 
     Long currentUserId =
         userRepository
             .findByEmail(email)
-            .orElseThrow(
-                () -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"))
+            .orElseThrow(() -> ApiException.unauthorized(ApiErrorMessage.USER_NOT_FOUND))
             .getId();
 
-    if (!currentUserId.equals(visit.getVet().getUserId())) {
-      throw new ResponseStatusException(
-          HttpStatus.FORBIDDEN, "You are not assigned vet for this visit");
-    }
+    prescriptionValidator.validateCurrentVetCanCreatePrescription(visit, currentUserId);
     Clinic clinic = visit.getClinic();
 
     Prescription prescription =
@@ -76,32 +69,22 @@ public class PrescriptionService {
                       .findById(i.getProductId())
                       .orElseThrow(
                           () ->
-                              new ResponseStatusException(
-                                  HttpStatus.NOT_FOUND, "Product not found: " + i.getProductId()));
+                              ApiException.notFound(
+                                  ApiErrorMessage.PRODUCT_NOT_FOUND + i.getProductId()));
 
               ClinicStockItem stock =
                   clinicStockItemRepository
                       .findByClinicIdAndProductId(clinic.getId(), product.getId())
                       .orElseThrow(
                           () ->
-                              new ResponseStatusException(
-                                  HttpStatus.BAD_REQUEST,
-                                  "Product not available in clinic stock: " + product.getId()));
+                              ApiException.badRequest(
+                                  ApiErrorMessage.PRODUCT_NOT_AVAILABLE_IN_CLINIC_STOCK
+                                      + product.getId()));
 
-              if (stock.getQuantityPackages() < i.getQuantityPackages()) {
-                throw new ResponseStatusException(
-                    HttpStatus.BAD_REQUEST,
-                    "Not enough stock for productId="
-                        + product.getId()
-                        + " (available="
-                        + stock.getQuantityPackages()
-                        + ", requested="
-                        + i.getQuantityPackages()
-                        + ")");
-              }
-
+              prescriptionValidator.validateStockAvailable(stock, i.getQuantityPackages());
               stock.setQuantityPackages(stock.getQuantityPackages() - i.getQuantityPackages());
               clinicStockItemRepository.save(stock);
+              realtimeNotificationService.publishClinicStockUpdated(stock);
 
               PrescriptionItem item =
                   PrescriptionItem.builder()
@@ -115,6 +98,8 @@ public class PrescriptionService {
             });
 
     Prescription saved = prescriptionRepository.save(prescription);
+    realtimeNotificationService.publishPrescriptionCreated(saved);
+    ownerNotificationService.prescriptionCreated(saved);
     return toResponse(saved);
   }
 
@@ -123,10 +108,7 @@ public class PrescriptionService {
     Prescription prescription =
         prescriptionRepository
             .findByVisitId(visitId)
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Prescription not found for this visit"));
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.PRESCRIPTION_NOT_FOUND));
     return toResponse(prescription);
   }
 
@@ -134,12 +116,7 @@ public class PrescriptionService {
   public PrescriptionResponse getForVisitForCurrentOwner(Long visitId) {
     Visit visit = getVisit(visitId);
     User currentUser = getCurrentUser();
-
-    if (visit.getAnimal() == null
-        || visit.getAnimal().getOwner() == null
-        || !visit.getAnimal().getOwner().getUserId().equals(currentUser.getId())) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "This visit is not yours");
-    }
+    prescriptionValidator.validateCurrentOwnerCanAccessPrescription(visit, currentUser);
 
     return getForVisit(visitId);
   }
@@ -148,11 +125,7 @@ public class PrescriptionService {
   public PrescriptionResponse getForVisitForCurrentVetOrAdmin(Long visitId) {
     Visit visit = getVisit(visitId);
     User currentUser = getCurrentUser();
-
-    if (currentUser.getRole() != Role.ADMIN
-        && (visit.getVet() == null || !visit.getVet().getUserId().equals(currentUser.getId()))) {
-      throw new ResponseStatusException(HttpStatus.FORBIDDEN, "Access denied");
-    }
+    prescriptionValidator.validateCurrentVetOrAdminCanAccessPrescription(visit, currentUser);
 
     return getForVisit(visitId);
   }
@@ -160,7 +133,7 @@ public class PrescriptionService {
   private Visit getVisit(Long visitId) {
     return visitRepository
         .findById(visitId)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Visit not found"));
+        .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
   }
 
   private User getCurrentUser() {
@@ -168,7 +141,7 @@ public class PrescriptionService {
     String email = auth.getName();
     return userRepository
         .findByEmail(email)
-        .orElseThrow(() -> new ResponseStatusException(HttpStatus.UNAUTHORIZED, "User not found"));
+        .orElseThrow(() -> ApiException.unauthorized(ApiErrorMessage.USER_NOT_FOUND));
   }
 
   private static PrescriptionResponse toResponse(Prescription prescription) {

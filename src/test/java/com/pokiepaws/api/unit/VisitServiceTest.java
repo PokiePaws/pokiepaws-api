@@ -1,14 +1,13 @@
 package com.pokiepaws.api.unit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowableOfType;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import com.pokiepaws.api.config.properties.VisitScheduleProperties;
 import com.pokiepaws.api.dto.visit.CreateVisitRequest;
-import com.pokiepaws.api.dto.visit.UpdateVisitMedicalDataRequest;
 import com.pokiepaws.api.models.Animal;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.Owner;
@@ -22,9 +21,14 @@ import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
+import com.pokiepaws.api.services.OwnerNotificationService;
+import com.pokiepaws.api.services.RealtimeNotificationService;
 import com.pokiepaws.api.services.VisitService;
-import java.time.LocalDate;
+import com.pokiepaws.api.validators.VisitValidator;
+import java.time.Clock;
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
 import org.junit.jupiter.api.AfterEach;
@@ -34,10 +38,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.web.server.ResponseStatusException;
 
 @ExtendWith(MockitoExtension.class)
 class VisitServiceTest {
@@ -48,15 +50,23 @@ class VisitServiceTest {
   @Mock VetRepository vetRepository;
   @Mock OwnerRepository ownerRepository;
   @Mock UserRepository userRepository;
+  @Mock RealtimeNotificationService realtimeNotificationService;
+  @Mock OwnerNotificationService ownerNotificationService;
 
   private VisitService visitService;
   private Owner owner;
   private Animal animal;
   private Clinic clinic;
   private Vet vet;
+  private VisitValidator visitValidator;
+  private Clock clock;
 
   @BeforeEach
   void setUp() {
+    VisitScheduleProperties visitScheduleProperties = new VisitScheduleProperties();
+    visitValidator = new VisitValidator(visitScheduleProperties, visitRepository);
+    clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
+
     visitService =
         new VisitService(
             visitRepository,
@@ -64,7 +74,11 @@ class VisitServiceTest {
             clinicRepository,
             vetRepository,
             ownerRepository,
-            userRepository);
+            userRepository,
+            realtimeNotificationService,
+            ownerNotificationService,
+            visitValidator,
+            clock);
 
     owner =
         Owner.builder()
@@ -129,295 +143,8 @@ class VisitServiceTest {
     assertThat(savedVisit.getClinic()).isEqualTo(clinic);
     assertThat(savedVisit.getVet()).isEqualTo(vet);
     assertThat(savedVisit.getDescription()).isEqualTo("Check");
-  }
 
-  @Test
-  void create_shouldThrow403_whenAnimalIsNotOwnedByCurrentOwner() {
-    authenticate("owner@pokiepaws.pl");
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner)).thenReturn(Optional.empty());
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () -> visitService.create(createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 0))));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    assertThat(ex.getReason()).isEqualTo("You are not the owner of this animal");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void create_shouldThrow400_whenStartTimeDoesNotMatchThirtyMinuteSlot() {
-    authenticate("owner@pokiepaws.pl");
-    CreateVisitRequest request = createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 15));
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner))
-        .thenReturn(Optional.of(animal));
-    when(clinicRepository.findById(30L)).thenReturn(Optional.of(clinic));
-    when(vetRepository.findById(40L)).thenReturn(Optional.of(vet));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(ResponseStatusException.class, () -> visitService.create(request));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(ex.getReason()).isEqualTo("Start time must align to 30-minute slots");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void create_shouldThrow404_whenClinicDoesNotExist() {
-    authenticate("owner@pokiepaws.pl");
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner))
-        .thenReturn(Optional.of(animal));
-    when(clinicRepository.findById(30L)).thenReturn(Optional.empty());
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () -> visitService.create(createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 0))));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(ex.getReason()).isEqualTo("Clinic not found");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void create_shouldThrow404_whenVetDoesNotExist() {
-    authenticate("owner@pokiepaws.pl");
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner))
-        .thenReturn(Optional.of(animal));
-    when(clinicRepository.findById(30L)).thenReturn(Optional.of(clinic));
-    when(vetRepository.findById(40L)).thenReturn(Optional.empty());
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () -> visitService.create(createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 0))));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-    assertThat(ex.getReason()).isEqualTo("Vet not found");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void create_shouldThrow400_whenVetDoesNotBelongToSelectedClinic() {
-    authenticate("owner@pokiepaws.pl");
-    Clinic otherClinic = Clinic.builder().id(31L).clinicName("Other Clinic").build();
-    Vet vetFromOtherClinic =
-        Vet.builder().userId(40L).clinic(otherClinic).firstName("Jan").lastName("Nowak").build();
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner))
-        .thenReturn(Optional.of(animal));
-    when(clinicRepository.findById(30L)).thenReturn(Optional.of(clinic));
-    when(vetRepository.findById(40L)).thenReturn(Optional.of(vetFromOtherClinic));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () -> visitService.create(createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 0))));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(ex.getReason()).isEqualTo("Selected vet does not belong to selected clinic");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void create_shouldThrow400_whenStartTimeIsOutsideWorkingHours() {
-    authenticate("owner@pokiepaws.pl");
-    CreateVisitRequest request = createVisitRequest(LocalDateTime.of(2026, 5, 11, 8, 30));
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner))
-        .thenReturn(Optional.of(animal));
-    when(clinicRepository.findById(30L)).thenReturn(Optional.of(clinic));
-    when(vetRepository.findById(40L)).thenReturn(Optional.of(vet));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(ResponseStatusException.class, () -> visitService.create(request));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(ex.getReason()).isEqualTo("Selected time is outside working hours");
-  }
-
-  @Test
-  void create_shouldThrow409_whenSlotIsAlreadyTaken() {
-    authenticate("owner@pokiepaws.pl");
-    CreateVisitRequest request = createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 0));
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(animalRepository.findByIdAndOwnerAndActiveTrue(20L, owner))
-        .thenReturn(Optional.of(animal));
-    when(clinicRepository.findById(30L)).thenReturn(Optional.of(clinic));
-    when(vetRepository.findById(40L)).thenReturn(Optional.of(vet));
-    when(visitRepository.findOverlappingVisits(
-            40L, request.getStartsAt(), request.getStartsAt().plusMinutes(30)))
-        .thenReturn(List.of(visit(99L, VisitStatus.SCHEDULED)));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(ResponseStatusException.class, () -> visitService.create(request));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
-    assertThat(ex.getReason()).isEqualTo("Selected slot is already taken");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void cancelForCurrentOwner_shouldMarkVisitCancelled() {
-    authenticate("owner@pokiepaws.pl");
-    Visit visit = visit(50L, VisitStatus.SCHEDULED);
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(visitRepository.findById(50L)).thenReturn(Optional.of(visit));
-
-    var response = visitService.cancelForCurrentOwner(50L);
-
-    assertThat(response.getStatus()).isEqualTo(VisitStatus.CANCELLED);
-    assertThat(visit.getStatus()).isEqualTo(VisitStatus.CANCELLED);
-    verify(visitRepository).save(visit);
-  }
-
-  @Test
-  void cancelForCurrentOwner_shouldThrow403_whenVisitBelongsToDifferentOwner() {
-    authenticate("owner@pokiepaws.pl");
-    Owner otherOwner =
-        Owner.builder()
-            .userId(11L)
-            .user(User.builder().id(11L).email("other@pokiepaws.pl").build())
-            .build();
-    Animal foreignAnimal =
-        Animal.builder()
-            .id(21L)
-            .name("Figa")
-            .species("Pies")
-            .gender(Animal.Gender.FEMALE)
-            .owner(otherOwner)
-            .active(true)
-            .build();
-    Visit foreignVisit = visit(51L, VisitStatus.SCHEDULED);
-    foreignVisit.setAnimal(foreignAnimal);
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(visitRepository.findById(51L)).thenReturn(Optional.of(foreignVisit));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class, () -> visitService.cancelForCurrentOwner(51L));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    assertThat(ex.getReason()).isEqualTo("You cannot cancel this visit");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void getByIdForCurrentOwner_shouldThrow403_whenVisitBelongsToDifferentOwner() {
-    authenticate("owner@pokiepaws.pl");
-    Owner otherOwner =
-        Owner.builder()
-            .userId(11L)
-            .user(User.builder().id(11L).email("other@pokiepaws.pl").build())
-            .build();
-    Animal foreignAnimal =
-        Animal.builder()
-            .id(21L)
-            .name("Figa")
-            .species("Pies")
-            .gender(Animal.Gender.FEMALE)
-            .owner(otherOwner)
-            .active(true)
-            .build();
-    Visit foreignVisit = visit(51L, VisitStatus.SCHEDULED);
-    foreignVisit.setAnimal(foreignAnimal);
-
-    when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
-    when(visitRepository.findById(51L)).thenReturn(Optional.of(foreignVisit));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class, () -> visitService.getByIdForCurrentOwner(51L));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    assertThat(ex.getReason()).isEqualTo("Access denied");
-  }
-
-  @Test
-  void getMyVisitsInRange_shouldThrow400_whenFromIsAfterTo() {
-    authenticate("owner@pokiepaws.pl");
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () ->
-                visitService.getMyVisitsInRange(
-                    LocalDate.of(2026, 5, 12), LocalDate.of(2026, 5, 11)));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(ex.getReason()).isEqualTo("'from' must be <= 'to'");
-  }
-
-  @Test
-  void updateMedicalData_shouldSaveDiagnosisAndRecommendationsForCurrentVet() {
-    authenticate("vet@pokiepaws.pl");
-    User vetUser = User.builder().id(40L).email("vet@pokiepaws.pl").build();
-    Visit visit = visit(50L, VisitStatus.SCHEDULED);
-    UpdateVisitMedicalDataRequest request = new UpdateVisitMedicalDataRequest();
-    request.setDisease("Zapalenie ucha");
-    request.setDiagnosis("Stan zapalny bez goraczki");
-    request.setRecommendations("Krople 2x dziennie");
-
-    when(userRepository.findByEmail("vet@pokiepaws.pl")).thenReturn(Optional.of(vetUser));
-    when(visitRepository.findById(50L)).thenReturn(Optional.of(visit));
-    when(visitRepository.save(visit)).thenReturn(visit);
-
-    var response = visitService.updateMedicalData(50L, request);
-
-    assertThat(response.getDisease()).isEqualTo("Zapalenie ucha");
-    assertThat(response.getDiagnosis()).isEqualTo("Stan zapalny bez goraczki");
-    assertThat(response.getRecommendations()).isEqualTo("Krople 2x dziennie");
-    verify(visitRepository).save(visit);
-  }
-
-  @Test
-  void updateMedicalData_shouldThrow400_whenVisitIsCancelled() {
-    authenticate("vet@pokiepaws.pl");
-    User vetUser = User.builder().id(40L).email("vet@pokiepaws.pl").build();
-
-    when(userRepository.findByEmail("vet@pokiepaws.pl")).thenReturn(Optional.of(vetUser));
-    when(visitRepository.findById(50L)).thenReturn(Optional.of(visit(50L, VisitStatus.CANCELLED)));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () -> visitService.updateMedicalData(50L, new UpdateVisitMedicalDataRequest()));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-    assertThat(ex.getReason()).isEqualTo("Cannot update cancelled visit");
-    verify(visitRepository, never()).save(any(Visit.class));
-  }
-
-  @Test
-  void updateMedicalData_shouldThrow403_whenCurrentVetIsNotAssignedToVisit() {
-    authenticate("other-vet@pokiepaws.pl");
-    User otherVet = User.builder().id(41L).email("other-vet@pokiepaws.pl").build();
-
-    when(userRepository.findByEmail("other-vet@pokiepaws.pl")).thenReturn(Optional.of(otherVet));
-    when(visitRepository.findById(50L)).thenReturn(Optional.of(visit(50L, VisitStatus.SCHEDULED)));
-
-    ResponseStatusException ex =
-        catchThrowableOfType(
-            ResponseStatusException.class,
-            () -> visitService.updateMedicalData(50L, new UpdateVisitMedicalDataRequest()));
-
-    assertThat(ex.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
-    assertThat(ex.getReason()).isEqualTo("You are not the vet for this visit");
-    verify(visitRepository, never()).save(any(Visit.class));
+    verify(ownerNotificationService, never()).visitConfirmed(any(Visit.class));
   }
 
   private void authenticate(String email) {

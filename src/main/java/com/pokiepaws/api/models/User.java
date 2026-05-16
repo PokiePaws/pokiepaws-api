@@ -1,6 +1,7 @@
 package com.pokiepaws.api.models;
 
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import lombok.*;
 
 @Entity
@@ -32,4 +33,11 @@ public class User {
   @Builder.Default
   @Column(nullable = false)
   private boolean active = true;
+
+  @Builder.Default
+  @Column(name = "failed_login_attempts", nullable = false)
+  private int failedLoginAttempts = 0;
+
+  @Column(name = "locked_until")
+  private LocalDateTime lockedUntil;
 }

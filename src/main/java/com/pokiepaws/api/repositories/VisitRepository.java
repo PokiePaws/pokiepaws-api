@@ -43,7 +43,14 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
 
   List<Visit> findAllByClinicId(Long clinicId);
 
-  List<Visit> findAllByClinicIdAndStartsAtBetween(Long clinicId, LocalDateTime from, LocalDateTime to);
+  List<Visit> findAllByClinicIdAndStartsAtBetween(
+      Long clinicId, LocalDateTime from, LocalDateTime to);
 
   List<Visit> findAllByStatus(VisitStatus status);
+
+  List<Visit> findAllByStatusAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      VisitStatus status, LocalDateTime from, LocalDateTime to);
+
+  List<Visit> findAllByStatusAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      VisitStatus status, LocalDateTime from, LocalDateTime to);
 }

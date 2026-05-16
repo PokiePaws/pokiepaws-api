@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@stomp/stompjs": "^7.3.0",
+    "ws": "^8.20.0"
+  },
+  "name": "pokiepaws-api",
+  "version": "1.0.0",
+  "description": "REST API dla platformy franczyzowej sieci gabinetów weterynaryjnych **PokiePaws**.",
+  "main": "stomp-test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PokiePaws/pokiepaws-api.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/PokiePaws/pokiepaws-api/issues"
+  },
+  "homepage": "https://github.com/PokiePaws/pokiepaws-api#readme"
+}

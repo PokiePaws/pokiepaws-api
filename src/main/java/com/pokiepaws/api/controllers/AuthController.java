@@ -28,7 +28,27 @@ public class AuthController {
 
   @PostMapping("/login")
   public ResponseEntity<AuthResponse> login(@Valid @RequestBody AuthRequest request) {
-    return ResponseEntity.ok(authService.login(request));
+    AuthResponse response = authService.login(request);
+    if (response.isMfaRequired()) {
+      return ResponseEntity.status(HttpStatus.ACCEPTED).body(response);
+    }
+    return ResponseEntity.ok(response);
+  }
+
+  @PostMapping("/refresh")
+  public ResponseEntity<AuthResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
+    return ResponseEntity.ok(authService.refresh(request.getRefreshToken()));
+  }
+
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(@Valid @RequestBody RefreshTokenRequest request) {
+    authService.logout(request.getRefreshToken());
+    return ResponseEntity.noContent().build();
+  }
+
+  @PostMapping("/2fa/verify")
+  public ResponseEntity<AuthResponse> verifyMfa(@Valid @RequestBody VerifyMfaRequest request) {
+    return ResponseEntity.ok(authService.verifyMfa(request.getToken()));
   }
 
   @GetMapping("/verify-email")

@@ -59,7 +59,7 @@ class VetServiceTest {
 
   @Test
   void save_shouldThrowEntityNotFound_whenClinicDoesNotExist() {
-    VetRequest request = vetRequest(); // Extracted outside the lambda to prevent SonarQube S5778
+    VetRequest request = vetRequest();
     when(clinicRepository.findById(1L)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> vetService.save(request))
