@@ -6,9 +6,9 @@ import lombok.Value;
 @Value
 @Builder
 public class WarehouseWorkerMeResponse {
-    Long warehouseId;
-    String warehouseName;
-    String firstName;
-    String lastName;
-    String email;
+  Long warehouseId;
+  String warehouseName;
+  String firstName;
+  String lastName;
+  String email;
 }

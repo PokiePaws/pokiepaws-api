@@ -7,7 +7,6 @@ import com.pokiepaws.api.services.ClinicAssortmentService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,27 +15,27 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ClinicAssortmentController {
 
-    private final ClinicAssortmentService service;
+  private final ClinicAssortmentService service;
 
-    @GetMapping
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public List<ClinicAssortmentItemResponse> getAll(
-            @RequestParam(required = false) Long clinicId,
-            @RequestParam(required = false) String status) {
-        return service.getAll(clinicId, status);
-    }
+  @GetMapping
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public List<ClinicAssortmentItemResponse> getAll(
+      @RequestParam(required = false) Long clinicId,
+      @RequestParam(required = false) String status) {
+    return service.getAll(clinicId, status);
+  }
 
-    @PostMapping
-    @PreAuthorize("hasRole('VET')")
-    public ClinicAssortmentItemResponse create(
-            @Valid @RequestBody ClinicAssortmentItemRequest request) {
-        return service.create(request);
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('VET')")
+  public ClinicAssortmentItemResponse create(
+      @Valid @RequestBody ClinicAssortmentItemRequest request) {
+    return service.create(request);
+  }
 
-    @PutMapping("/{id}/status")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public ClinicAssortmentItemResponse updateStatus(
-            @PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
-        return service.updateStatus(id, request.getStatus());
-    }
+  @PutMapping("/{id}/status")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public ClinicAssortmentItemResponse updateStatus(
+      @PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
+    return service.updateStatus(id, request.getStatus());
+  }
 }

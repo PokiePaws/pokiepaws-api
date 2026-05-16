@@ -9,17 +9,15 @@ import lombok.Data;
 @Data
 public class ClinicAssortmentItemRequest {
 
-    @NotNull
-    private Long clinicId;
+  @NotNull private Long clinicId;
 
-    @NotBlank
-    private String name;
+  @NotBlank private String name;
 
-    @Min(1)
-    private int amount;
+  @Min(1)
+  private int amount;
 
-    private String description;
-    private String category;
-    private String unit;
-    private LocalDate expiryDate;
+  private String description;
+  private String category;
+  private String unit;
+  private LocalDate expiryDate;
 }

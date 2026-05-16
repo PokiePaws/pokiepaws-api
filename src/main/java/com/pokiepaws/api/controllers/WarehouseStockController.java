@@ -14,47 +14,49 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class WarehouseStockController {
 
-    private final WarehouseStockService service;
+  private final WarehouseStockService service;
 
-    @GetMapping
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public List<WarehouseStockItemResponse> getAll() {
-        return service.getAll();
-    }
+  @GetMapping
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public List<WarehouseStockItemResponse> getAll() {
+    return service.getAll();
+  }
 
-    @GetMapping("/warehouse/{warehouseId}")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public List<WarehouseStockItemResponse> getByWarehouse(@PathVariable Long warehouseId) {
-        return service.getByWarehouse(warehouseId);
-    }
+  @GetMapping("/warehouse/{warehouseId}")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public List<WarehouseStockItemResponse> getByWarehouse(@PathVariable Long warehouseId) {
+    return service.getByWarehouse(warehouseId);
+  }
 
-    @GetMapping("/low-stock")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public List<WarehouseStockItemResponse> getLowStock(@RequestParam(defaultValue = "10") int threshold) {
-        return service.getLowStock(threshold);
-    }
+  @GetMapping("/low-stock")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public List<WarehouseStockItemResponse> getLowStock(
+      @RequestParam(defaultValue = "10") int threshold) {
+    return service.getLowStock(threshold);
+  }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public WarehouseStockItemResponse getById(@PathVariable Long id) {
-        return service.getById(id);
-    }
+  @GetMapping("/{id}")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public WarehouseStockItemResponse getById(@PathVariable Long id) {
+    return service.getById(id);
+  }
 
-    @PostMapping
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public WarehouseStockItemResponse create(@Valid @RequestBody WarehouseStockItemRequest request) {
-        return service.create(request);
-    }
+  @PostMapping
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public WarehouseStockItemResponse create(@Valid @RequestBody WarehouseStockItemRequest request) {
+    return service.create(request);
+  }
 
-    @PutMapping("/{id}")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public WarehouseStockItemResponse update(@PathVariable Long id, @Valid @RequestBody WarehouseStockItemRequest request) {
-        return service.update(id, request);
-    }
+  @PutMapping("/{id}")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public WarehouseStockItemResponse update(
+      @PathVariable Long id, @Valid @RequestBody WarehouseStockItemRequest request) {
+    return service.update(id, request);
+  }
 
-    @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public void delete(@PathVariable Long id) {
-        service.delete(id);
-    }
+  @DeleteMapping("/{id}")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public void delete(@PathVariable Long id) {
+    service.delete(id);
+  }
 }

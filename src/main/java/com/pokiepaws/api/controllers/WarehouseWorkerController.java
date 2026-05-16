@@ -17,21 +17,26 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class WarehouseWorkerController {
 
-    private final WarehouseWorkerRepository warehouseWorkerRepository;
+  private final WarehouseWorkerRepository warehouseWorkerRepository;
 
-    @GetMapping("/me")
-    @PreAuthorize("hasRole('WAREHOUSE')")
-    public WarehouseWorkerMeResponse getMe(Authentication authentication) {
-        String email = authentication.getName();
-        WarehouseWorker worker = warehouseWorkerRepository.findByUser_Email(email)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Warehouse worker not found"));
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('WAREHOUSE')")
+  public WarehouseWorkerMeResponse getMe(Authentication authentication) {
+    String email = authentication.getName();
+    WarehouseWorker worker =
+        warehouseWorkerRepository
+            .findByUser_Email(email)
+            .orElseThrow(
+                () ->
+                    new ResponseStatusException(
+                        HttpStatus.NOT_FOUND, "Warehouse worker not found"));
 
-        return WarehouseWorkerMeResponse.builder()
-                .warehouseId(worker.getWarehouse().getId())
-                .warehouseName(worker.getWarehouse().getWarehouseName())
-                .firstName(worker.getFirstName())
-                .lastName(worker.getLastName())
-                .email(email)
-                .build();
-    }
+    return WarehouseWorkerMeResponse.builder()
+        .warehouseId(worker.getWarehouse().getId())
+        .warehouseName(worker.getWarehouse().getWarehouseName())
+        .firstName(worker.getFirstName())
+        .lastName(worker.getLastName())
+        .email(email)
+        .build();
+  }
 }
