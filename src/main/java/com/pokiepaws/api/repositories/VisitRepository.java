@@ -14,11 +14,34 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
   List<Visit> findAllByVetUserId(Long vetUserId);
 
   List<Visit> findAllByVetUserIdAndStartsAtBetween(
-      Long vetUserId, LocalDateTime start, LocalDateTime end);
+      Long vetUserId, LocalDateTime from, LocalDateTime to);
+
+  List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtAfterOrderByStartsAtAsc(
+      Long vetUserId, VisitStatus status, LocalDateTime startsAt);
+
+  List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtBetweenOrderByStartsAtAsc(
+      Long vetUserId, VisitStatus status, LocalDateTime from, LocalDateTime to);
+
+  List<Visit> findAllByClinicId(Long clinicId);
+
+  List<Visit> findAllByStatus(VisitStatus status);
+
+  List<Visit> findAllByAnimalOwnerUserIdAndStartsAtAfterOrderByStartsAtAsc(
+      Long ownerUserId, LocalDateTime startsAt);
+
+  List<Visit> findAllByAnimalOwnerUserIdAndStartsAtBetween(
+      Long ownerUserId, LocalDateTime from, LocalDateTime to);
+
+  List<Visit> findAllByStatusAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      VisitStatus status, LocalDateTime from, LocalDateTime to);
+
+  List<Visit> findAllByStatusAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      VisitStatus status, LocalDateTime from, LocalDateTime to);
 
   @Query(
       """
-      select v from Visit v
+      select v
+      from Visit v
       where v.vet.userId = :vetUserId
         and v.status <> com.pokiepaws.api.models.VisitStatus.CANCELLED
         and v.startsAt < :end
@@ -28,29 +51,4 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
       @Param("vetUserId") Long vetUserId,
       @Param("start") LocalDateTime start,
       @Param("end") LocalDateTime end);
-
-  List<Visit> findAllByAnimalOwnerUserIdAndStartsAtAfterOrderByStartsAtAsc(
-      Long ownerUserId, LocalDateTime startsAt);
-
-  List<Visit> findAllByAnimalOwnerUserIdAndStartsAtBetween(
-      Long ownerUserId, LocalDateTime start, LocalDateTime end);
-
-  List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtAfterOrderByStartsAtAsc(
-      Long vetUserId, VisitStatus status, LocalDateTime startsAt);
-
-  List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtBetweenOrderByStartsAtAsc(
-      Long vetUserId, VisitStatus status, LocalDateTime start, LocalDateTime end);
-
-  List<Visit> findAllByClinicId(Long clinicId);
-
-  List<Visit> findAllByClinicIdAndStartsAtBetween(
-      Long clinicId, LocalDateTime from, LocalDateTime to);
-
-  List<Visit> findAllByStatus(VisitStatus status);
-
-  List<Visit> findAllByStatusAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
-      VisitStatus status, LocalDateTime from, LocalDateTime to);
-
-  List<Visit> findAllByStatusAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
-      VisitStatus status, LocalDateTime from, LocalDateTime to);
 }

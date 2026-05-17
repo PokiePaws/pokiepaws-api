@@ -6,7 +6,8 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-public class PokiepawsApiApplication {
+public class
+PokiepawsApiApplication {
 
   public static void main(String[] args) {
     SpringApplication.run(PokiepawsApiApplication.class, args);

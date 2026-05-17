@@ -53,6 +53,8 @@ public class AuthService {
   private static final String RESET_TOKEN_INVALID_OR_EXPIRED =
       "The token is invalid or has expired";
   private static final String ACCOUNT_INACTIVE = "The account is inactive";
+  private static final String MFA_NOT_AVAILABLE_FOR_ROLE =
+      "2FA is available only for admin and vet accounts";
   private static final String MFA_TOKEN_INVALID_OR_EXPIRED =
       "The 2FA token is invalid or has expired";
   private static final String MFA_RATE_LIMIT_EXCEEDED =
@@ -213,6 +215,28 @@ public class AuthService {
     AuthResponse response = issueTokens(user);
     activityLogService.logFor(user.getEmail(), LogType.login, "2FA verification successful", null);
     return response;
+  }
+
+  @Transactional
+  public void resendMfa(String email) {
+    User user =
+        userRepository
+            .findByEmail(email)
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found"));
+
+    if (!user.isEmailVerified()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, PLEASE_VERIFY_EMAIL_FIRST);
+    }
+    if (!user.isActive()) {
+      throw new ResponseStatusException(HttpStatus.FORBIDDEN, ACCOUNT_INACTIVE);
+    }
+    if (!requiresMfa(user)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, MFA_NOT_AVAILABLE_FOR_ROLE);
+    }
+
+    createAndSendMfaToken(user);
+    activityLogService.logFor(user.getEmail(), LogType.login, "2FA challenge resent", null);
   }
 
   @Transactional

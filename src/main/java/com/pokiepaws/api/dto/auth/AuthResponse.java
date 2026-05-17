@@ -1,5 +1,6 @@
 package com.pokiepaws.api.dto.auth;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -9,6 +10,11 @@ public class AuthResponse {
   private String email;
   private String role;
   private boolean mfaRequired;
+
+  @JsonProperty("token")
+  public String getToken() {
+    return accessToken;
+  }
 
   public static AuthResponse authenticated(
       String accessToken, String refreshToken, String email, String role) {

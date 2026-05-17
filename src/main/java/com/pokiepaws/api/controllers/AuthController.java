@@ -51,6 +51,13 @@ public class AuthController {
     return ResponseEntity.ok(authService.verifyMfa(request.getToken()));
   }
 
+  @PostMapping("/2fa/resend")
+  public ResponseEntity<MessageResponse> resendMfa(
+      @Valid @RequestBody ResendMfaRequest request) {
+    authService.resendMfa(request.getEmail());
+    return ResponseEntity.ok(new MessageResponse("A new 2FA verification link has been sent."));
+  }
+
   @GetMapping("/verify-email")
   public ResponseEntity<String> verifyEmail(@RequestParam String token) {
     authService.verifyEmail(token);
