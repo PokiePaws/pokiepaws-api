@@ -1,6 +1,7 @@
 package com.pokiepaws.api.services;
 
 import com.pokiepaws.api.dto.vet.VetListResponse;
+import com.pokiepaws.api.dto.vet.VetMeResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.User;
@@ -26,6 +27,23 @@ public class VetService {
 
   public List<Vet> getAll() {
     return vetRepository.findAll();
+  }
+
+  public VetMeResponse getMe(String email) {
+    Vet vet =
+        vetRepository
+            .findByUserEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("Vet not found for email: " + email));
+    return VetMeResponse.builder()
+        .userId(vet.getUserId())
+        .firstName(vet.getFirstName())
+        .lastName(vet.getLastName())
+        .phone(vet.getPhone())
+        .npwz(vet.getNpwz())
+        .specialization(vet.getSpecialization())
+        .clinicId(vet.getClinic() != null ? vet.getClinic().getId() : null)
+        .clinicName(vet.getClinic() != null ? vet.getClinic().getClinicName() : null)
+        .build();
   }
 
   public Vet getById(Long id) {
