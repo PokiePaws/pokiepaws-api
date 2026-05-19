@@ -21,6 +21,10 @@ public class RealtimeNotificationService {
 
   private static final String USER_NOTIFICATIONS_QUEUE = "/queue/notifications";
   private static final String ADMIN_ACTIVITY_TOPIC = "/topic/admin/activity";
+  private static final String TOPIC_VISITS = "visits";
+  private static final String KEY_CLINIC_ID = "clinicId";
+  private static final String KEY_ANIMAL_ID = "animalId";
+  private static final String KEY_STARTS_AT = "startsAt";
 
   private final SimpMessagingTemplate messagingTemplate;
   private final Clock clock;
@@ -35,14 +39,14 @@ public class RealtimeNotificationService {
             visit.getId(),
             "New visit scheduled",
             Map.of(
-                "clinicId", clinicId,
-                "animalId", visit.getAnimal().getId(),
-                "startsAt", visit.getStartsAt()));
+                KEY_CLINIC_ID, clinicId,
+                KEY_ANIMAL_ID, visit.getAnimal().getId(),
+                KEY_STARTS_AT, visit.getStartsAt()));
 
     sendAfterCommit(
         () -> {
           sendToUser(vetEmail, notification);
-          sendToClinic(clinicId, "visits", notification);
+          sendToClinic(clinicId, TOPIC_VISITS, notification);
         });
   }
 
@@ -56,14 +60,14 @@ public class RealtimeNotificationService {
             visit.getId(),
             "Visit cancelled",
             Map.of(
-                "clinicId", clinicId,
-                "animalId", visit.getAnimal().getId(),
-                "startsAt", visit.getStartsAt()));
+                KEY_CLINIC_ID, clinicId,
+                KEY_ANIMAL_ID, visit.getAnimal().getId(),
+                KEY_STARTS_AT, visit.getStartsAt()));
 
     sendAfterCommit(
         () -> {
           sendToUser(vetEmail, notification);
-          sendToClinic(clinicId, "visits", notification);
+          sendToClinic(clinicId, TOPIC_VISITS, notification);
         });
   }
 
@@ -76,11 +80,11 @@ public class RealtimeNotificationService {
             visit.getId(),
             "Visit medical data updated",
             Map.of(
-                "clinicId", clinicId,
-                "animalId", visit.getAnimal().getId(),
-                "startsAt", visit.getStartsAt()));
+                KEY_CLINIC_ID, clinicId,
+                KEY_ANIMAL_ID, visit.getAnimal().getId(),
+                KEY_STARTS_AT, visit.getStartsAt()));
 
-    sendAfterCommit(() -> sendToClinic(clinicId, "visits", notification));
+    sendAfterCommit(() -> sendToClinic(clinicId, TOPIC_VISITS, notification));
   }
 
   public void publishPrescriptionCreated(Prescription prescription) {
@@ -93,11 +97,14 @@ public class RealtimeNotificationService {
             prescription.getId(),
             "Prescription created",
             Map.of(
-                "visitId", visit.getId(),
-                "clinicId", clinicId,
-                "vetUserId", prescription.getVet().getUserId()));
+                "visitId",
+                visit.getId(),
+                KEY_CLINIC_ID,
+                clinicId,
+                "vetUserId",
+                prescription.getVet().getUserId()));
 
-    sendAfterCommit(() -> sendToClinic(clinicId, "visits", notification));
+    sendAfterCommit(() -> sendToClinic(clinicId, TOPIC_VISITS, notification));
   }
 
   public void publishClinicStockUpdated(ClinicStockItem stockItem) {
@@ -109,9 +116,12 @@ public class RealtimeNotificationService {
             stockItem.getId(),
             "Clinic stock updated",
             Map.of(
-                "clinicId", clinicId,
-                "productId", stockItem.getProduct().getId(),
-                "quantityPackages", stockItem.getQuantityPackages()));
+                KEY_CLINIC_ID,
+                clinicId,
+                "productId",
+                stockItem.getProduct().getId(),
+                "quantityPackages",
+                stockItem.getQuantityPackages()));
 
     sendAfterCommit(
         () -> {
