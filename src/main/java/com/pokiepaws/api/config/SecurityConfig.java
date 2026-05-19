@@ -37,20 +37,19 @@ public class SecurityConfig {
                     .permitAll()
                     .requestMatchers(
                         "/error",
+                        "/ws/**",
+                        "/ws-sockjs/**",
                         "/api/auth/**",
+                        "/actuator/health",
                         "/swagger-ui.html",
                         "/swagger-ui/**",
                         "/v3/api-docs/**",
                         "/api-docs/**",
-                        "/actuator/health",
-                        "/actuator/health/**",
                         "/webjars/**",
                         "/swagger-ui/index.html",
                         "/swagger-ui/swagger-initializer.js",
-                        "/ws/**",
-                        "/ws-native/**")
-                    .permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/clinics", "/api/clinics/**")
+                        "/api/clinics",
+                        "/api/clinics/**")
                     .permitAll()
                     .anyRequest()
                     .authenticated())
@@ -69,6 +68,6 @@ public class SecurityConfig {
 
   @Bean
   public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder(12);
+    return new BCryptPasswordEncoder();
   }
 }

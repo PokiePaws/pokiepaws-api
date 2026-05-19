@@ -44,6 +44,11 @@ public class WarehouseStockService {
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Warehouse not found"));
 
+    if (repository.existsByNameIgnoreCaseAndWarehouse_Id(request.getName(), warehouse.getId())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Product with this name already exists in the warehouse");
+    }
+
     return toResponse(
         repository.save(
             WarehouseStockItem.builder()
@@ -66,6 +71,12 @@ public class WarehouseStockService {
             .findById(request.getWarehouseId())
             .orElseThrow(
                 () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Warehouse not found"));
+
+    if (!item.getName().equalsIgnoreCase(request.getName())
+        && repository.existsByNameIgnoreCaseAndWarehouse_Id(request.getName(), warehouse.getId())) {
+      throw new ResponseStatusException(
+          HttpStatus.CONFLICT, "Product with this name already exists in the warehouse");
+    }
 
     item.setWarehouse(warehouse);
     item.setName(request.getName());
