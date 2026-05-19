@@ -27,13 +27,10 @@ public class ClinicService {
   private final VisitRepository visitRepository;
   private final VisitScheduleProperties visitScheduleProperties;
 
+  private final ClinicQueryService clinicQueryService;
+
   public List<Clinic> getAll() {
     return clinicRepository.findAll();
-  }
-
-  @Transactional(readOnly = true)
-  public List<Clinic> getAllAsDto() {
-    return clinicRepository.findAll().stream().filter(Clinic::isActive).toList();
   }
 
   public Clinic getById(Long id) {
@@ -47,21 +44,9 @@ public class ClinicService {
   }
 
   @Transactional(readOnly = true)
-  public List<Clinic> getByCityAsDto(String city) {
-    return clinicRepository.findAllByCity(city).stream().filter(Clinic::isActive).toList();
-  }
-
-  @Transactional(readOnly = true)
-  public Clinic getByIdAsDto(Long id) {
-    return clinicRepository
-        .findById(id)
-        .filter(Clinic::isActive)
-        .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.CLINIC_NOT_FOUND));
-  }
-
-  @Transactional(readOnly = true)
   public List<VetResponse> getVetsByClinicId(Long clinicId) {
-    getByIdAsDto(clinicId);
+    clinicQueryService.getByIdAsDto(clinicId);
+
     return vetRepository.findAllByClinicId(clinicId).stream()
         .map(
             vet ->
@@ -80,7 +65,8 @@ public class ClinicService {
 
   @Transactional(readOnly = true)
   public AvailableSlotsResponse getAvailableSlots(Long clinicId, Long vetUserId, LocalDate date) {
-    Clinic clinic = getByIdAsDto(clinicId);
+    Clinic clinic = clinicQueryService.getByIdAsDto(clinicId);
+
     var vet =
         vetRepository
             .findById(vetUserId)

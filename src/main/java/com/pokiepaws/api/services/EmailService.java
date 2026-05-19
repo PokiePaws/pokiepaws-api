@@ -9,14 +9,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class EmailService {
 
+  private static final String NO_REPLY_EMAIL = "noreply@pokiepaws.pl";
+
   private final JavaMailSender mailSender;
 
   public void sendVerificationEmail(String to, String token, String baseUrl) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom("noreply@pokiepaws.pl");
-    message.setTo(to);
-    message.setSubject("PokiePaws — Please confirm your email address");
-    message.setText(
+    sendEmail(
+        to,
+        "PokiePaws — Please confirm your email address",
         "Welcome to PokiePaws! 🐾\n\n"
             + "Click the link below to confirm your email address:\n\n"
             + baseUrl
@@ -24,15 +24,12 @@ public class EmailService {
             + token
             + "\n\n"
             + "Best regards,\nThe PokiePaws team");
-    mailSender.send(message);
   }
 
   public void sendForgotPasswordEmail(String to, String token, String baseUrl) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom("noreply@pokiepaws.pl");
-    message.setTo(to);
-    message.setSubject("PokiePaws — Reset password");
-    message.setText(
+    sendEmail(
+        to,
+        "PokiePaws — Reset password",
         "Hello! 🐾\n\n"
             + "We have received a request to reset the password for your PokiePaws account.\n\n"
             + "Click the link below to set a new password:\n\n"
@@ -42,15 +39,12 @@ public class EmailService {
             + "\n\n"
             + "If you haven’t requested a password reset, please ignore this message.\n\n"
             + "Best regards,\nThe PokiePaws team");
-    mailSender.send(message);
   }
 
   public void sendMfaLink(String to, String token, String frontendUrl) {
-    SimpleMailMessage message = new SimpleMailMessage();
-    message.setFrom("noreply@pokiepaws.pl");
-    message.setTo(to);
-    message.setSubject("PokiePaws - Two-step verification");
-    message.setText(
+    sendEmail(
+        to,
+        "PokiePaws - Two-step verification",
         "Hello!\n\n"
             + "Click the link below to finish signing in to PokiePaws:\n\n"
             + frontendUrl
@@ -60,6 +54,14 @@ public class EmailService {
             + "This link expires in 15 minutes and can be used only once.\n\n"
             + "If you did not try to sign in, ignore this message.\n\n"
             + "Best regards,\nThe PokiePaws team");
+  }
+
+  private void sendEmail(String to, String subject, String text) {
+    SimpleMailMessage message = new SimpleMailMessage();
+    message.setFrom(NO_REPLY_EMAIL);
+    message.setTo(to);
+    message.setSubject(subject);
+    message.setText(text);
     mailSender.send(message);
   }
 }

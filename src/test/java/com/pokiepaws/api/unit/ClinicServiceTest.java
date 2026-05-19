@@ -14,6 +14,7 @@ import com.pokiepaws.api.models.VisitStatus;
 import com.pokiepaws.api.repositories.ClinicRepository;
 import com.pokiepaws.api.repositories.VetRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
+import com.pokiepaws.api.services.ClinicQueryService;
 import com.pokiepaws.api.services.ClinicService;
 import java.time.LocalDate;
 import java.util.List;
@@ -32,6 +33,7 @@ class ClinicServiceTest {
   @Mock ClinicRepository clinicRepository;
   @Mock VetRepository vetRepository;
   @Mock VisitRepository visitRepository;
+  @Mock ClinicQueryService clinicQueryService;
 
   private ClinicService clinicService;
 
@@ -39,47 +41,11 @@ class ClinicServiceTest {
   void setUp() {
     clinicService =
         new ClinicService(
-            clinicRepository, vetRepository, visitRepository, new VisitScheduleProperties());
-  }
-
-  @Test
-  void getAllAsDto_shouldReturnOnlyActiveClinics() {
-    Clinic active = clinic(1L, "PokiePaws Legnica", "Legnica", true);
-    Clinic inactive = clinic(2L, "PokiePaws Wroclaw", "Wroclaw", false);
-    when(clinicRepository.findAll()).thenReturn(List.of(active, inactive));
-
-    var result = clinicService.getAllAsDto();
-
-    assertThat(result).hasSize(1);
-    assertThat(result.getFirst().getId()).isEqualTo(1L);
-    assertThat(result.getFirst().getClinicName()).isEqualTo("PokiePaws Legnica");
-    assertThat(result.getFirst().getCity()).isEqualTo("Legnica");
-  }
-
-  @Test
-  void getByCityAsDto_shouldReturnOnlyActiveClinicsInCity() {
-    Clinic active = clinic(1L, "PokiePaws Legnica", "Legnica", true);
-    Clinic inactive = clinic(2L, "Closed PokiePaws", "Legnica", false);
-    when(clinicRepository.findAllByCity("Legnica")).thenReturn(List.of(active, inactive));
-
-    var result = clinicService.getByCityAsDto("Legnica");
-
-    assertThat(result).hasSize(1);
-    assertThat(result.getFirst().getClinicName()).isEqualTo("PokiePaws Legnica");
-  }
-
-  @Test
-  void getByIdAsDto_shouldThrow404_whenClinicDoesNotExist() {
-    when(clinicRepository.findById(404L)).thenReturn(Optional.empty());
-
-    assertThatThrownBy(() -> clinicService.getByIdAsDto(404L))
-        .isInstanceOf(ResponseStatusException.class)
-        .satisfies(
-            ex -> {
-              ResponseStatusException rse = (ResponseStatusException) ex;
-              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-              assertThat(rse.getReason()).isEqualTo("Clinic not found");
-            });
+            clinicRepository,
+            vetRepository,
+            visitRepository,
+            new VisitScheduleProperties(),
+            clinicQueryService);
   }
 
   @Test
@@ -97,7 +63,7 @@ class ClinicServiceTest {
             .phone("+48123123123")
             .build();
 
-    when(clinicRepository.findById(1L)).thenReturn(Optional.of(clinic));
+    when(clinicQueryService.getByIdAsDto(1L)).thenReturn(clinic);
     when(vetRepository.findAllByClinicId(1L)).thenReturn(List.of(vet));
 
     var result = clinicService.getVetsByClinicId(1L);
@@ -111,14 +77,17 @@ class ClinicServiceTest {
   @Test
   void getAvailableSlots_shouldExcludeTakenSlotsAndCancelledVisits() {
     LocalDate date = LocalDate.now().plusDays(1);
+
     Clinic clinic = clinic(1L, "PokiePaws Legnica", "Legnica", true);
     Vet vet = Vet.builder().userId(5L).clinic(clinic).build();
+
     Visit scheduled =
         Visit.builder()
             .startsAt(date.atTime(10, 0))
             .endsAt(date.atTime(10, 30))
             .status(VisitStatus.SCHEDULED)
             .build();
+
     Visit cancelled =
         Visit.builder()
             .startsAt(date.atTime(11, 0))
@@ -126,7 +95,7 @@ class ClinicServiceTest {
             .status(VisitStatus.CANCELLED)
             .build();
 
-    when(clinicRepository.findById(1L)).thenReturn(Optional.of(clinic));
+    when(clinicQueryService.getByIdAsDto(1L)).thenReturn(clinic);
     when(vetRepository.findById(5L)).thenReturn(Optional.of(vet));
     when(visitRepository.findAllByVetUserIdAndStartsAtBetween(
             5L, date.atTime(9, 0), date.atTime(17, 0)))
@@ -143,7 +112,7 @@ class ClinicServiceTest {
     Clinic requestedClinic = clinic(1L, "PokiePaws Legnica", "Legnica", true);
     Vet vet = Vet.builder().userId(5L).clinic(clinic(2L, "Other", "Wroclaw", true)).build();
 
-    when(clinicRepository.findById(1L)).thenReturn(Optional.of(requestedClinic));
+    when(clinicQueryService.getByIdAsDto(1L)).thenReturn(requestedClinic);
     when(vetRepository.findById(5L)).thenReturn(Optional.of(vet));
 
     LocalDate tomorrow = LocalDate.now().plusDays(1);

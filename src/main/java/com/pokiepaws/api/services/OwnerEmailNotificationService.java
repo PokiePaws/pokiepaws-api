@@ -24,36 +24,36 @@ public class OwnerEmailNotificationService {
   public void sendVisitConfirmed(Visit visit) {
     sendVisitEmail(
         visit,
-        "PokiePaws - Wizyta potwierdzona",
-        "Twoja wizyta zostala potwierdzona i zaplanowana na " + formatVisitTime(visit) + ".");
+        "PokiePaws - Visit Confirmed",
+        "Your visit has been confirmed and scheduled for " + formatVisitTime(visit) + ".");
   }
 
   public void sendVisitCancelled(Visit visit) {
     sendVisitEmail(
         visit,
-        "PokiePaws - Wizyta odwolana",
-        "Wizyta zaplanowana na " + formatVisitTime(visit) + " zostala odwolana.");
+        "PokiePaws - Visit cancelled",
+        "The visit is scheduled for " + formatVisitTime(visit) + " has been canceled.");
   }
 
   public void sendVisitReminder(Visit visit, String reminderType) {
     sendVisitEmail(
         visit,
-        "PokiePaws - Przypomnienie o wizycie",
-        "Przypominamy o wizycie: " + formatVisitTime(visit) + ".");
+        "PokiePaws - Visit Reminder",
+        "A reminder about your visit: " + formatVisitTime(visit) + ".");
   }
 
   public void sendPrescriptionCreated(Visit visit) {
     sendVisitEmail(
         visit,
-        "PokiePaws - Nowa recepta",
-        "Do wizyty z " + formatVisitTime(visit) + " dodano recepte.");
+        "PokiePaws - New Prescription",
+        "A prescription has been added to the appointment on " + formatVisitTime(visit) + ".");
   }
 
   public void sendVisitMedicalDataUpdated(Visit visit) {
     sendVisitEmail(
         visit,
-        "PokiePaws - Zaktualizowano dane medyczne",
-        "Zaktualizowano dane medyczne wizyty z " + formatVisitTime(visit) + ".");
+        "PokiePaws - Animal medical info updated",
+        "The medical data for the visit has been updated from " + formatVisitTime(visit) + ".");
   }
 
   private void sendVisitEmail(Visit visit, String subject, String body) {
