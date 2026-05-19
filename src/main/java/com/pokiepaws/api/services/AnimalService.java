@@ -73,6 +73,11 @@ public class AnimalService {
         .toList();
   }
 
+  @Transactional(readOnly = true)
+  public List<AnimalResponse> getAnimalsByClinic(Long clinicId) {
+    return animalRepository.findAllByActiveTrue().stream().map(this::toResponse).toList();
+  }
+
   @Transactional
   public AnimalResponse addAnimal(AnimalRequest request) {
     String microchip = cleanMicrochip(request.getMicrochipNumber());
