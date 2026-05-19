@@ -5,7 +5,10 @@ import java.time.LocalDate;
 import lombok.*;
 
 @Entity
-@Table(name = "warehouse_stock_items")
+@Table(
+        name = "warehouse_stock_items",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"name", "warehouse_id"})
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -13,30 +16,30 @@ import lombok.*;
 @Builder
 public class WarehouseStockItem {
 
-  @Id
-  @GeneratedValue(strategy = GenerationType.IDENTITY)
-  private Long id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
 
-  @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn(name = "warehouse_id", nullable = false)
-  private Warehouse warehouse;
+    @ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "warehouse_id", nullable = false)
+    private Warehouse warehouse;
 
-  @Column(nullable = false)
-  private String name;
+    @Column(nullable = false)
+    private String name;
 
-  @Column(name = "assortment_description", columnDefinition = "TEXT")
-  private String assortmentDescription;
+    @Column(name = "assortment_description", columnDefinition = "TEXT")
+    private String assortmentDescription;
 
-  private Double price;
+    private Double price;
 
-  private String unit;
+    private String unit;
 
-  private String category;
+    private String category;
 
-  private int amount;
+    private int amount;
 
-  @Column(name = "expiry_date")
-  private LocalDate expiryDate;
+    @Column(name = "expiry_date")
+    private LocalDate expiryDate;
 
-  private String status;
+    private String status;
 }
