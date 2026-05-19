@@ -24,50 +24,50 @@ import org.springframework.web.cors.CorsConfigurationSource;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    private final JwtAuthFilter jwtAuthFilter;
+  private final JwtAuthFilter jwtAuthFilter;
 
-    @Bean
-    public SecurityFilterChain securityFilterChain(
-            HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
-        http.cors(cors -> cors.configurationSource(corsConfigurationSource))
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(
-                        auth ->
-                                auth.requestMatchers(HttpMethod.OPTIONS, "/**")
-                                        .permitAll()
-                                        .requestMatchers(
-                                                "/error",
-                                                "/ws/**",
-                                                "/ws-sockjs/**",
-                                                "/api/auth/**",
-                                                "/actuator/health",
-                                                "/swagger-ui.html",
-                                                "/swagger-ui/**",
-                                                "/v3/api-docs/**",
-                                                "/api-docs/**",
-                                                "/webjars/**",
-                                                "/swagger-ui/index.html",
-                                                "/swagger-ui/swagger-initializer.js",
-                                                "/api/clinics",
-                                                "/api/clinics/**")
-                                        .permitAll()
-                                        .anyRequest()
-                                        .authenticated())
-                .sessionManagement(
-                        session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+  @Bean
+  public SecurityFilterChain securityFilterChain(
+      HttpSecurity http, CorsConfigurationSource corsConfigurationSource) throws Exception {
+    http.cors(cors -> cors.configurationSource(corsConfigurationSource))
+        .csrf(AbstractHttpConfigurer::disable)
+        .authorizeHttpRequests(
+            auth ->
+                auth.requestMatchers(HttpMethod.OPTIONS, "/**")
+                    .permitAll()
+                    .requestMatchers(
+                        "/error",
+                        "/ws/**",
+                        "/ws-sockjs/**",
+                        "/api/auth/**",
+                        "/actuator/health",
+                        "/swagger-ui.html",
+                        "/swagger-ui/**",
+                        "/v3/api-docs/**",
+                        "/api-docs/**",
+                        "/webjars/**",
+                        "/swagger-ui/index.html",
+                        "/swagger-ui/swagger-initializer.js",
+                        "/api/clinics",
+                        "/api/clinics/**")
+                    .permitAll()
+                    .anyRequest()
+                    .authenticated())
+        .sessionManagement(
+            session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
-        return http.build();
-    }
+    return http.build();
+  }
 
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
-            throws Exception {
-        return config.getAuthenticationManager();
-    }
+  @Bean
+  public AuthenticationManager authenticationManager(AuthenticationConfiguration config)
+      throws Exception {
+    return config.getAuthenticationManager();
+  }
 
-    @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+  @Bean
+  public PasswordEncoder passwordEncoder() {
+    return new BCryptPasswordEncoder();
+  }
 }

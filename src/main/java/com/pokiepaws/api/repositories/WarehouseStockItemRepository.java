@@ -6,11 +6,11 @@ import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface WarehouseStockItemRepository extends JpaRepository<WarehouseStockItem, Long> {
-    List<WarehouseStockItem> findAllByWarehouseId(Long warehouseId);
+  List<WarehouseStockItem> findAllByWarehouseId(Long warehouseId);
 
-    List<WarehouseStockItem> findAllByAmountLessThanEqual(int threshold);
+  List<WarehouseStockItem> findAllByAmountLessThanEqual(int threshold);
 
-    boolean existsByNameIgnoreCaseAndWarehouse_Id(String name, Long warehouseId);
+  boolean existsByNameIgnoreCaseAndWarehouse_Id(String name, Long warehouseId);
 
-    Optional<WarehouseStockItem> findByNameIgnoreCase(String name);
+  Optional<WarehouseStockItem> findByNameIgnoreCase(String name);
 }
