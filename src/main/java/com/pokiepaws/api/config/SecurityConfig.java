@@ -41,13 +41,6 @@ public class SecurityConfig {
                         "/ws-sockjs/**",
                         "/api/auth/**",
                         "/actuator/health",
-                        "/swagger-ui.html",
-                        "/swagger-ui/**",
-                        "/v3/api-docs/**",
-                        "/api-docs/**",
-                        "/webjars/**",
-                        "/swagger-ui/index.html",
-                        "/swagger-ui/swagger-initializer.js",
                         "/api/clinics",
                         "/api/clinics/**")
                     .permitAll()

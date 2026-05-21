@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class WarehouseWorkersSeeder implements Seeder {
 
   private final UserRepository userRepository;
