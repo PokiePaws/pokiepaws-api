@@ -103,6 +103,7 @@ public class VetsSeeder implements Seeder {
                 .role(Role.VET)
                 .emailVerified(true)
                 .active(true)
+                .failedLoginAttempts(0)
                 .build());
 
     vetRepository.save(

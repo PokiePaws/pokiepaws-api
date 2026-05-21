@@ -93,6 +93,7 @@ public class WarehouseWorkersSeeder implements Seeder {
                 .role(Role.WAREHOUSE)
                 .emailVerified(true)
                 .active(true)
+                .failedLoginAttempts(0)
                 .build());
 
     warehouseWorkerRepository.save(

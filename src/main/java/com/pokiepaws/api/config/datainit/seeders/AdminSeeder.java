@@ -46,6 +46,7 @@ public class AdminSeeder implements Seeder {
             .role(Role.ADMIN)
             .emailVerified(true)
             .active(true)
+            .failedLoginAttempts(0)
             .build();
 
     userRepository.save(admin);
