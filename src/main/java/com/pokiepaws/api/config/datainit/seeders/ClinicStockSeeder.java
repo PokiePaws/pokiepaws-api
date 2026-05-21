@@ -34,31 +34,31 @@ public class ClinicStockSeeder implements Seeder {
     int defaultQty = 50;
 
     List<Product> products =
-            productRepository.findAll().stream().filter(Product::isActive).toList();
+        productRepository.findAll().stream().filter(Product::isActive).toList();
     List<Clinic> clinics = clinicRepository.findAll();
 
     log.info(
-            "ClinicStockSeeder started. clinics={}, activeProducts={}, defaultQty={}",
-            clinics.size(),
-            products.size(),
-            defaultQty);
+        "ClinicStockSeeder started. clinics={}, activeProducts={}, defaultQty={}",
+        clinics.size(),
+        products.size(),
+        defaultQty);
 
     int created = 0;
 
     for (Clinic clinic : clinics) {
       for (Product product : products) {
         boolean exists =
-                clinicStockItemRepository
-                        .findByClinicIdAndProductId(clinic.getId(), product.getId())
-                        .isPresent();
+            clinicStockItemRepository
+                .findByClinicIdAndProductId(clinic.getId(), product.getId())
+                .isPresent();
 
         if (!exists) {
           clinicStockItemRepository.save(
-                  ClinicStockItem.builder()
-                          .clinic(clinic)
-                          .product(product)
-                          .quantityPackages(defaultQty)
-                          .build());
+              ClinicStockItem.builder()
+                  .clinic(clinic)
+                  .product(product)
+                  .quantityPackages(defaultQty)
+                  .build());
           created++;
         }
       }

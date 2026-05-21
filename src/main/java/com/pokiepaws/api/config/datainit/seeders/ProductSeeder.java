@@ -26,11 +26,11 @@ public class ProductSeeder implements Seeder {
   @Transactional
   public void seed() {
     List<Product> products =
-            List.of(
-                    Product.builder().name("Amoxicillin 500mg").unit("capsule").active(true).build(),
-                    Product.builder().name("Carprofen 50mg").unit("tablet").active(true).build(),
-                    Product.builder().name("Ear drops 10ml").unit("bottle").active(true).build(),
-                    Product.builder().name("Caniviton").unit("tablet").active(true).build());
+        List.of(
+            Product.builder().name("Amoxicillin 500mg").unit("capsule").active(true).build(),
+            Product.builder().name("Carprofen 50mg").unit("tablet").active(true).build(),
+            Product.builder().name("Ear drops 10ml").unit("bottle").active(true).build(),
+            Product.builder().name("Caniviton").unit("tablet").active(true).build());
 
     log.info("ProductSeeder started. productsToEnsure={}", products.size());
 
