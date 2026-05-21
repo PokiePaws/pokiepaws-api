@@ -92,7 +92,8 @@ public class WarehouseWorkersSeeder implements Seeder {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.WAREHOUSE)
                 .emailVerified(true)
-                .active(true).failedLoginAttempts(0)
+                .active(true)
+                .failedLoginAttempts(0)
                 .build());
 
     warehouseWorkerRepository.save(
