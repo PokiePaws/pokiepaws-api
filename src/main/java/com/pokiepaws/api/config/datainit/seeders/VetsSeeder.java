@@ -102,7 +102,7 @@ public class VetsSeeder implements Seeder {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.VET)
                 .emailVerified(true)
-                .active(true)
+                .active(true).failedLoginAttempts(0)
                 .build());
 
     vetRepository.save(

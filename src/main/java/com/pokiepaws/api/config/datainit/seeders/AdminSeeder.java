@@ -45,7 +45,7 @@ public class AdminSeeder implements Seeder {
             .password(passwordEncoder.encode(adminPassword))
             .role(Role.ADMIN)
             .emailVerified(true)
-            .active(true)
+            .active(true).failedLoginAttempts(0)
             .build();
 
     userRepository.save(admin);

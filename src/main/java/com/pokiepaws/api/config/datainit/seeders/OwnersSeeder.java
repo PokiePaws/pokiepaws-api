@@ -93,7 +93,7 @@ public class OwnersSeeder implements Seeder {
                 .password(passwordEncoder.encode(dto.getPassword()))
                 .role(Role.OWNER)
                 .emailVerified(true)
-                .active(true)
+                .active(true).failedLoginAttempts(0)
                 .build());
 
     ownerRepository.save(
