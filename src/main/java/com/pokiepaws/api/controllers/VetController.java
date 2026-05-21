@@ -1,5 +1,6 @@
 package com.pokiepaws.api.controllers;
 
+import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
@@ -27,8 +28,8 @@ public class VetController {
   }
 
   @GetMapping("/clinic/{clinicId}")
-  public List<Vet> getByClinic(@PathVariable Long clinicId) {
-    return vetService.getByClinic(clinicId);
+  public List<VetListResponse> getByClinic(@PathVariable Long clinicId) {
+    return vetService.getListItemsByClinic(clinicId);
   }
 
   @PostMapping
