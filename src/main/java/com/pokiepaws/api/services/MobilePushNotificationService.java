@@ -135,5 +135,4 @@ public class MobilePushNotificationService {
   private String formatVisitTime(Visit visit) {
     return visit.getStartsAt().format(VISIT_TIME_FORMATTER);
   }
-
 }

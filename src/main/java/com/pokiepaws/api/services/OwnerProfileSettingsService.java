@@ -136,8 +136,7 @@ public class OwnerProfileSettingsService {
     User user = owner.getUser();
     Long userId = owner.getUserId();
 
-    animalRepository.findAllByOwnerAndActiveTrue(owner)
-            .forEach(animal -> animal.setActive(false));
+    animalRepository.findAllByOwnerAndActiveTrue(owner).forEach(animal -> animal.setActive(false));
 
     visitRepository
         .findAllByAnimalOwnerUserIdAndStatusIn(
@@ -146,8 +145,9 @@ public class OwnerProfileSettingsService {
 
     ownerDeviceTokenRepository.deleteAllByOwnerUserId(userId);
 
-    refreshTokenRepository.findAllByUserAndRevokedFalse(user)
-            .forEach(refreshToken -> refreshToken.setRevoked(true));
+    refreshTokenRepository
+        .findAllByUserAndRevokedFalse(user)
+        .forEach(refreshToken -> refreshToken.setRevoked(true));
 
     owner.setFirstName("Deleted");
     owner.setLastName("Owner");
