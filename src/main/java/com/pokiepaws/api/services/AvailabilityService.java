@@ -29,9 +29,9 @@ public class AvailabilityService {
   public AvailableSlotsResponse getAvailableSlots(Long clinicId, Long vetUserId, LocalDate date) {
 
     Vet vet =
-            vetRepository
-                    .findById(vetUserId)
-                    .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VET_NOT_FOUND));
+        vetRepository
+            .findById(vetUserId)
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VET_NOT_FOUND));
 
     if (vet.getClinic() == null || !vet.getClinic().getId().equals(clinicId)) {
       throw ApiException.badRequest(ApiErrorMessage.SELECTED_VET_DOES_NOT_BELONG_TO_CLINIC);
@@ -39,23 +39,18 @@ public class AvailabilityService {
 
     int slotMinutes = visitScheduleProperties.getSlotMinutes();
 
-    LocalDateTime dayStart =
-            date.atTime(visitScheduleProperties.getWorkStart());
+    LocalDateTime dayStart = date.atTime(visitScheduleProperties.getWorkStart());
 
-    LocalDateTime dayEnd =
-            date.atTime(visitScheduleProperties.getWorkEnd());
+    LocalDateTime dayEnd = date.atTime(visitScheduleProperties.getWorkEnd());
 
     List<Visit> visits =
-            visitRepository.findAllByVetUserIdAndStartsAtBetween(
-                    vetUserId,
-                    dayStart,
-                    dayEnd);
+        visitRepository.findAllByVetUserIdAndStartsAtBetween(vetUserId, dayStart, dayEnd);
 
     List<LocalDateTime> available = new ArrayList<>();
 
     for (LocalDateTime slotStart = dayStart;
-         slotStart.plusMinutes(slotMinutes).isBefore(dayEnd.plusNanos(1));
-         slotStart = slotStart.plusMinutes(slotMinutes)) {
+        slotStart.plusMinutes(slotMinutes).isBefore(dayEnd.plusNanos(1));
+        slotStart = slotStart.plusMinutes(slotMinutes)) {
 
       LocalDateTime slotEnd = slotStart.plusMinutes(slotMinutes);
 
@@ -65,26 +60,22 @@ public class AvailabilityService {
     }
 
     return AvailableSlotsResponse.builder()
-            .clinicId(clinicId)
-            .vetUserId(vetUserId)
-            .date(date)
-            .slotMinutes(slotMinutes)
-            .workdayStart(dayStart)
-            .workdayEnd(dayEnd)
-            .availableStarts(available)
-            .build();
+        .clinicId(clinicId)
+        .vetUserId(vetUserId)
+        .date(date)
+        .slotMinutes(slotMinutes)
+        .workdayStart(dayStart)
+        .workdayEnd(dayEnd)
+        .availableStarts(available)
+        .build();
   }
 
   private boolean hasOverlappingVisit(
-          List<Visit> visits,
-          LocalDateTime slotStart,
-          LocalDateTime slotEnd) {
+      List<Visit> visits, LocalDateTime slotStart, LocalDateTime slotEnd) {
 
     return visits.stream()
-            .filter(visit -> visit.getStatus() != VisitStatus.CANCELLED)
-            .anyMatch(
-                    visit->
-                            slotStart.isBefore(visit.getEndsAt())
-                                    && slotEnd.isAfter(visit.getStartsAt()));
+        .filter(visit -> visit.getStatus() != VisitStatus.CANCELLED)
+        .anyMatch(
+            visit -> slotStart.isBefore(visit.getEndsAt()) && slotEnd.isAfter(visit.getStartsAt()));
   }
 }
