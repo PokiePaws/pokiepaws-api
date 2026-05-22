@@ -5,9 +5,12 @@ import com.pokiepaws.api.dto.visit.AvailableSlotsResponse;
 import com.pokiepaws.api.exceptions.ApiErrorMessage;
 import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.Vet;
+import com.pokiepaws.api.models.Visit;
+import com.pokiepaws.api.models.VisitStatus;
 import com.pokiepaws.api.repositories.VetRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
-import java.time.*;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +27,7 @@ public class AvailabilityService {
 
   @Transactional(readOnly = true)
   public AvailableSlotsResponse getAvailableSlots(Long clinicId, Long vetUserId, LocalDate date) {
+
     Vet vet =
         vetRepository
             .findById(vetUserId)
@@ -34,10 +38,13 @@ public class AvailabilityService {
     }
 
     int slotMinutes = visitScheduleProperties.getSlotMinutes();
+
     LocalDateTime dayStart = date.atTime(visitScheduleProperties.getWorkStart());
+
     LocalDateTime dayEnd = date.atTime(visitScheduleProperties.getWorkEnd());
 
-    var visits = visitRepository.findAllByVetUserIdAndStartsAtBetween(vetUserId, dayStart, dayEnd);
+    List<Visit> visits =
+        visitRepository.findAllByVetUserIdAndStartsAtBetween(vetUserId, dayStart, dayEnd);
 
     List<LocalDateTime> available = new ArrayList<>();
 
@@ -47,14 +54,7 @@ public class AvailabilityService {
 
       LocalDateTime slotEnd = slotStart.plusMinutes(slotMinutes);
 
-      LocalDateTime finalSlotStart = slotStart;
-      boolean overlaps =
-          visits.stream()
-              .filter(v -> v.getStatus() != com.pokiepaws.api.models.VisitStatus.CANCELLED)
-              .anyMatch(
-                  v -> finalSlotStart.isBefore(v.getEndsAt()) && slotEnd.isAfter(v.getStartsAt()));
-
-      if (!overlaps) {
+      if (!hasOverlappingVisit(visits, slotStart, slotEnd)) {
         available.add(slotStart);
       }
     }
@@ -68,5 +68,14 @@ public class AvailabilityService {
         .workdayEnd(dayEnd)
         .availableStarts(available)
         .build();
+  }
+
+  private boolean hasOverlappingVisit(
+      List<Visit> visits, LocalDateTime slotStart, LocalDateTime slotEnd) {
+
+    return visits.stream()
+        .filter(visit -> visit.getStatus() != VisitStatus.CANCELLED)
+        .anyMatch(
+            visit -> slotStart.isBefore(visit.getEndsAt()) && slotEnd.isAfter(visit.getStartsAt()));
   }
 }

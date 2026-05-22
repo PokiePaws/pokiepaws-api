@@ -49,7 +49,8 @@ public class WarehousesSeeder implements Seeder {
   private void createWarehouseIfMissing(WarehouseSeedDto dto) {
     warehouseRepository
         .findByWarehouseNameIgnoreCase(dto.getName())
-        .orElseGet(
+        .ifPresentOrElse(
+            warehouse -> log.info("Warehouse already exists: {}", dto.getName()),
             () ->
                 warehouseRepository.save(
                     Warehouse.builder()

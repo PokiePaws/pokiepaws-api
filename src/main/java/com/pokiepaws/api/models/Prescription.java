@@ -51,9 +51,4 @@ public class Prescription {
     items.add(item);
     item.setPrescription(this);
   }
-
-  public void removeItem(PrescriptionItem item) {
-    items.remove(item);
-    item.setPrescription(null);
-  }
 }

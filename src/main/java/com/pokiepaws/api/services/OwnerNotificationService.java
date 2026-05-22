@@ -34,7 +34,7 @@ public class OwnerNotificationService {
     sendAfterCommit(
         () -> {
           mobilePushNotificationService.sendVisitReminder(visit, reminderType);
-          ownerEmailNotificationService.sendVisitReminder(visit, reminderType);
+          ownerEmailNotificationService.sendVisitReminder(visit);
         });
   }
 
@@ -42,7 +42,7 @@ public class OwnerNotificationService {
     Visit visit = prescription.getVisit();
     sendAfterCommit(
         () -> {
-          mobilePushNotificationService.sendPrescriptionCreated(visit);
+          mobilePushNotificationService.sendPrescriptionCreated(prescription);
           ownerEmailNotificationService.sendPrescriptionCreated(visit);
         });
   }

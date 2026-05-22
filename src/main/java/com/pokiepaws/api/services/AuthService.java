@@ -151,7 +151,7 @@ public class AuthService {
             .orElseThrow(
                 () -> {
                   activityLogService.logFor(
-                      request.getEmail(), LogType.login, "Failed login: unknown account", null);
+                      request.getEmail(), LogType.LOGIN, "Failed login: unknown account", null);
                   return new ResponseStatusException(HttpStatus.UNAUTHORIZED, INVALID_CREDENTIALS);
                 });
 
@@ -163,7 +163,7 @@ public class AuthService {
     }
     if (isLoginLocked(user)) {
       activityLogService.logFor(
-          user.getEmail(), LogType.login, "Failed login: account temporarily locked", null);
+          user.getEmail(), LogType.LOGIN, "Failed login: account temporarily locked", null);
       throw new ResponseStatusException(HttpStatus.LOCKED, ACCOUNT_TEMPORARILY_LOCKED);
     }
 
@@ -179,12 +179,12 @@ public class AuthService {
 
     if (requiresMfa(user)) {
       createAndSendMfaToken(user);
-      activityLogService.logFor(user.getEmail(), LogType.login, "2FA challenge sent", null);
+      activityLogService.logFor(user.getEmail(), LogType.LOGIN, "2FA challenge sent", null);
       return AuthResponse.mfaRequired(user.getEmail(), user.getRole().name());
     }
 
     AuthResponse response = issueTokens(user);
-    activityLogService.logFor(user.getEmail(), LogType.login, "Login successful", null);
+    activityLogService.logFor(user.getEmail(), LogType.LOGIN, "Login successful", null);
     return response;
   }
 
@@ -197,7 +197,7 @@ public class AuthService {
             .orElseThrow(
                 () -> {
                   activityLogService.logFor(
-                      "unknown", LogType.login, "2FA verification failed", null);
+                      "unknown", LogType.LOGIN, "2FA verification failed", null);
                   return new ResponseStatusException(
                       HttpStatus.BAD_REQUEST, MFA_TOKEN_INVALID_OR_EXPIRED);
                 });
@@ -211,7 +211,7 @@ public class AuthService {
     mfaTokenRepository.save(mfaToken);
 
     AuthResponse response = issueTokens(user);
-    activityLogService.logFor(user.getEmail(), LogType.login, "2FA verification successful", null);
+    activityLogService.logFor(user.getEmail(), LogType.LOGIN, "2FA verification successful", null);
     return response;
   }
 
@@ -225,7 +225,7 @@ public class AuthService {
             .findFirst()
             .orElseThrow(
                 () -> {
-                  activityLogService.logFor("unknown", LogType.login, "Refresh token failed", null);
+                  activityLogService.logFor("unknown", LogType.LOGIN, "Refresh token failed", null);
                   return new ResponseStatusException(
                       HttpStatus.UNAUTHORIZED, REFRESH_TOKEN_INVALID_OR_EXPIRED);
                 });
@@ -239,7 +239,7 @@ public class AuthService {
     refreshTokenRepository.save(refreshToken);
 
     AuthResponse response = issueTokens(user);
-    activityLogService.logFor(user.getEmail(), LogType.login, "Refresh token rotated", null);
+    activityLogService.logFor(user.getEmail(), LogType.LOGIN, "Refresh token rotated", null);
     return response;
   }
 
@@ -252,7 +252,7 @@ public class AuthService {
             token -> {
               token.setRevoked(true);
               refreshTokenRepository.save(token);
-              activityLogService.logFor(token.getUser().getEmail(), LogType.login, "Logout", null);
+              activityLogService.logFor(token.getUser().getEmail(), LogType.LOGIN, "Logout", null);
             });
   }
 
@@ -377,7 +377,7 @@ public class AuthService {
       user.setLockedUntil(LocalDateTime.now(clock).plusMinutes(LOGIN_LOCK_MINUTES));
     }
     userRepository.save(user);
-    activityLogService.logFor(user.getEmail(), LogType.login, "Failed login", null);
+    activityLogService.logFor(user.getEmail(), LogType.LOGIN, "Failed login", null);
   }
 
   private void resetFailedLogins(User user) {

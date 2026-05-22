@@ -226,7 +226,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("ownernotfound@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("Failed login: unknown account"),
             isNull());
   }
@@ -297,7 +297,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("verified@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("Login successful"),
             isNull());
   }
@@ -332,7 +332,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("verified@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("Failed login"),
             isNull());
   }
@@ -395,7 +395,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("verified@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("Failed login: account temporarily locked"),
             isNull());
   }
@@ -463,7 +463,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("admin@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("2FA challenge sent"),
             isNull());
     verify(jwtService, never()).generateToken(any(UserDetails.class));
@@ -546,7 +546,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("vet@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("2FA verification successful"),
             isNull());
   }
@@ -589,7 +589,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("owner@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("Refresh token rotated"),
             isNull());
   }
@@ -624,7 +624,7 @@ class AuthServiceTest {
     verify(activityLogService)
         .logFor(
             eq("owner@pokiepaws.pl"),
-            eq(com.pokiepaws.api.models.ActivityLog.LogType.login),
+            eq(com.pokiepaws.api.models.ActivityLog.LogType.LOGIN),
             eq("Logout"),
             isNull());
   }

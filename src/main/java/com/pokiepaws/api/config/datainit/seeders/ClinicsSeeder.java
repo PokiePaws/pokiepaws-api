@@ -62,7 +62,8 @@ public class ClinicsSeeder implements Seeder {
   private void getOrCreateClinic(ClinicSeedDto dto) {
     clinicRepository
         .findByClinicNameIgnoreCase(dto.getName())
-        .orElseGet(
+        .ifPresentOrElse(
+            clinic -> log.info("Clinic already exists: {}", dto.getName()),
             () ->
                 clinicRepository.save(
                     Clinic.builder()
