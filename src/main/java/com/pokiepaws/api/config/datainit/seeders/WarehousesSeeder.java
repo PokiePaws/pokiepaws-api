@@ -48,24 +48,25 @@ public class WarehousesSeeder implements Seeder {
 
   private void createWarehouseIfMissing(WarehouseSeedDto dto) {
     warehouseRepository
-        .findByWarehouseNameIgnoreCase(dto.getName())
-        .orElseGet(
-            () ->
-                warehouseRepository.save(
-                    Warehouse.builder()
-                        .warehouseName(dto.getName())
-                        .email(dto.getEmail())
-                        .nip(dto.getNip())
-                        .regon(dto.getRegon())
-                        .phone(dto.getPhone())
-                        .street(dto.getStreet())
-                        .houseNumber(dto.getHouseNumber())
-                        .apartmentNumber(dto.getApartmentNumber())
-                        .postalCode(dto.getPostalCode())
-                        .city(dto.getCity())
-                        .country(dto.getCountry())
-                        .workingHours(dto.getWorkingHours())
-                        .active(true)
-                        .build()));
+            .findByWarehouseNameIgnoreCase(dto.getName())
+            .ifPresentOrElse(
+                    warehouse -> log.info("Warehouse already exists: {}", dto.getName()),
+                    () ->
+                            warehouseRepository.save(
+                                    Warehouse.builder()
+                                            .warehouseName(dto.getName())
+                                            .email(dto.getEmail())
+                                            .nip(dto.getNip())
+                                            .regon(dto.getRegon())
+                                            .phone(dto.getPhone())
+                                            .street(dto.getStreet())
+                                            .houseNumber(dto.getHouseNumber())
+                                            .apartmentNumber(dto.getApartmentNumber())
+                                            .postalCode(dto.getPostalCode())
+                                            .city(dto.getCity())
+                                            .country(dto.getCountry())
+                                            .workingHours(dto.getWorkingHours())
+                                            .active(true)
+                                            .build()));
   }
 }

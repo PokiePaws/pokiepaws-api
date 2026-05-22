@@ -61,24 +61,25 @@ public class ClinicsSeeder implements Seeder {
 
   private void getOrCreateClinic(ClinicSeedDto dto) {
     clinicRepository
-        .findByClinicNameIgnoreCase(dto.getName())
-        .orElseGet(
-            () ->
-                clinicRepository.save(
-                    Clinic.builder()
-                        .clinicName(dto.getName())
-                        .regon(dto.getRegon())
-                        .nip(dto.getNip())
-                        .email(dto.getEmail())
-                        .phone(dto.getPhone())
-                        .street(dto.getStreet())
-                        .houseNumber(dto.getHouseNumber())
-                        .apartmentNumber(dto.getApartmentNumber())
-                        .postalCode(dto.getPostalCode())
-                        .city(dto.getCity())
-                        .country(dto.getCountry())
-                        .workingHours(dto.getWorkingHours())
-                        .active(true)
-                        .build()));
+            .findByClinicNameIgnoreCase(dto.getName())
+            .ifPresentOrElse(
+                    clinic -> log.info("Clinic already exists: {}", dto.getName()),
+                    () ->
+                            clinicRepository.save(
+                                    Clinic.builder()
+                                            .clinicName(dto.getName())
+                                            .regon(dto.getRegon())
+                                            .nip(dto.getNip())
+                                            .email(dto.getEmail())
+                                            .phone(dto.getPhone())
+                                            .street(dto.getStreet())
+                                            .houseNumber(dto.getHouseNumber())
+                                            .apartmentNumber(dto.getApartmentNumber())
+                                            .postalCode(dto.getPostalCode())
+                                            .city(dto.getCity())
+                                            .country(dto.getCountry())
+                                            .workingHours(dto.getWorkingHours())
+                                            .active(true)
+                                            .build()));
   }
 }

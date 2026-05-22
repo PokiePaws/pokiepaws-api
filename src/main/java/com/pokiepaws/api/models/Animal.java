@@ -32,7 +32,7 @@ public class Animal {
 
   @Column private String color;
 
-  @Column(unique = true, nullable = true)
+  @Column(unique = true)
   private String microchipNumber;
 
   @Column private Double weight;

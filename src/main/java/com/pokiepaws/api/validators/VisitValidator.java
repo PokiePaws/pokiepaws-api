@@ -56,14 +56,6 @@ public class VisitValidator {
     }
   }
 
-  public void validateCurrentOwnerCanAccessAnimal(Animal animal, Owner owner) {
-    if (animal == null
-        || animal.getOwner() == null
-        || !animal.getOwner().getUserId().equals(owner.getUserId())) {
-      throw ApiException.forbidden(ApiErrorMessage.ANIMAL_NOT_OWNED);
-    }
-  }
-
   public void validateCurrentOwnerCanAccessVisit(Visit visit, Owner owner) {
     if (visit.getAnimal() == null
         || visit.getAnimal().getOwner() == null

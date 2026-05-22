@@ -8,6 +8,7 @@ import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
 import com.pokiepaws.api.models.OwnerDeviceToken;
+import com.pokiepaws.api.models.Prescription;
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.repositories.OwnerDeviceTokenRepository;
 import java.time.format.DateTimeFormatter;
@@ -51,12 +52,14 @@ public class MobilePushNotificationService {
         reminderType);
   }
 
-  public void sendPrescriptionCreated(Visit visit) {
+  public void sendPrescriptionCreated(Prescription prescription) {
+    Visit visit = prescription.getVisit();
     sendVisitNotificationAfterCommit(
         visit,
         "Nowa recepta",
         "Do wizyty z " + formatVisitTime(visit) + " dodano recepte.",
-        "PRESCRIPTION_CREATED");
+        "PRESCRIPTION_CREATED",
+        Map.of("prescriptionId", String.valueOf(prescription.getId())));
   }
 
   public void sendVisitMedicalDataUpdated(Visit visit) {
@@ -69,17 +72,22 @@ public class MobilePushNotificationService {
 
   private void sendVisitNotificationAfterCommit(
       Visit visit, String title, String body, String eventType) {
+    sendVisitNotificationAfterCommit(visit, title, body, eventType, Map.of());
+  }
+
+  private void sendVisitNotificationAfterCommit(
+      Visit visit, String title, String body, String eventType, Map<String, String> extraData) {
     Long ownerUserId = visit.getAnimal().getOwner().getUserId();
     Long visitId = visit.getId();
+    Map<String, String> data =
+        new java.util.HashMap<>(
+            Map.of(
+                "type", eventType,
+                "visitId", String.valueOf(visitId),
+                "startsAt", visit.getStartsAt().toString()));
+    data.putAll(extraData);
 
-    sendToOwner(
-        ownerUserId,
-        title,
-        body,
-        Map.of(
-            "type", eventType,
-            "visitId", String.valueOf(visitId),
-            "startsAt", visit.getStartsAt().toString()));
+    sendToOwner(ownerUserId, title, body, data);
   }
 
   private void sendToOwner(Long ownerUserId, String title, String body, Map<String, String> data) {

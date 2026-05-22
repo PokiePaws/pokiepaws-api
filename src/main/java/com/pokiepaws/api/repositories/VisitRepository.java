@@ -12,8 +12,6 @@ import org.springframework.data.repository.query.Param;
 public interface VisitRepository extends JpaRepository<Visit, Long> {
   List<Visit> findAllByAnimalId(Long animalId);
 
-  List<Visit> findAllByVetUserId(Long vetUserId);
-
   List<Visit> findAllByVetUserIdAndStartsAtBetween(
       Long vetUserId, LocalDateTime start, LocalDateTime end);
 
@@ -45,16 +43,9 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
   List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtBetweenOrderByStartsAtAsc(
       Long vetUserId, VisitStatus status, LocalDateTime start, LocalDateTime end);
 
-  List<Visit> findAllByClinicId(Long clinicId);
+  List<Visit> findAllByStatusInAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      Collection<VisitStatus> statuses, LocalDateTime from, LocalDateTime to);
 
-  List<Visit> findAllByClinicIdAndStartsAtBetween(
-      Long clinicId, LocalDateTime from, LocalDateTime to);
-
-  List<Visit> findAllByStatus(VisitStatus status);
-
-  List<Visit> findAllByStatusAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
-      VisitStatus status, LocalDateTime from, LocalDateTime to);
-
-  List<Visit> findAllByStatusAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
-      VisitStatus status, LocalDateTime from, LocalDateTime to);
+  List<Visit> findAllByStatusInAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      Collection<VisitStatus> statuses, LocalDateTime from, LocalDateTime to);
 }

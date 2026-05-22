@@ -48,10 +48,10 @@ public class ActivityLog {
   }
 
   public enum LogType {
-    login,
-    data,
-    supply,
-    lab,
-    prescription
+    LOGIN,
+    DATA,
+    SUPPLY,
+    LAB,
+    PRESCRIPTION
   }
 }

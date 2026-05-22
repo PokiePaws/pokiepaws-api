@@ -34,11 +34,7 @@ public class FirebaseConfig {
       FirebaseOptions options = FirebaseOptions.builder().setCredentials(credentials).build();
       FirebaseApp.initializeApp(options);
       log.info("Firebase Admin SDK initialized.");
-    } catch (IOException ex) {
-      log.warn(
-          "Firebase Admin SDK could not be initialized. Mobile push notifications are disabled. Reason: {}",
-          ex.getMessage());
-    } catch (RuntimeException ex) {
+    } catch (IOException | RuntimeException ex) {
       log.warn(
           "Firebase Admin SDK could not be initialized. Mobile push notifications are disabled. Reason: {}",
           ex.getMessage());

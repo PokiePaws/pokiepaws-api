@@ -35,7 +35,7 @@ public class OwnerEmailNotificationService {
         "The visit is scheduled for " + formatVisitTime(visit) + " has been canceled.");
   }
 
-  public void sendVisitReminder(Visit visit, String reminderType) {
+  public void sendVisitReminder(Visit visit) {
     sendVisitEmail(
         visit,
         "PokiePaws - Visit Reminder",
