@@ -8,6 +8,7 @@ import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
 import com.pokiepaws.api.models.OwnerDeviceToken;
+import com.pokiepaws.api.models.Prescription;
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.repositories.OwnerDeviceTokenRepository;
 import java.time.format.DateTimeFormatter;
@@ -16,8 +17,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -53,12 +52,14 @@ public class MobilePushNotificationService {
         reminderType);
   }
 
-  public void sendPrescriptionCreated(Visit visit) {
+  public void sendPrescriptionCreated(Prescription prescription) {
+    Visit visit = prescription.getVisit();
     sendVisitNotificationAfterCommit(
         visit,
         "Nowa recepta",
         "Do wizyty z " + formatVisitTime(visit) + " dodano recepte.",
-        "PRESCRIPTION_CREATED");
+        "PRESCRIPTION_CREATED",
+        Map.of("prescriptionId", String.valueOf(prescription.getId())));
   }
 
   public void sendVisitMedicalDataUpdated(Visit visit) {
@@ -71,25 +72,29 @@ public class MobilePushNotificationService {
 
   private void sendVisitNotificationAfterCommit(
       Visit visit, String title, String body, String eventType) {
+    sendVisitNotificationAfterCommit(visit, title, body, eventType, Map.of());
+  }
+
+  private void sendVisitNotificationAfterCommit(
+      Visit visit, String title, String body, String eventType, Map<String, String> extraData) {
     Long ownerUserId = visit.getAnimal().getOwner().getUserId();
     Long visitId = visit.getId();
+    Map<String, String> data =
+        new java.util.HashMap<>(
+            Map.of(
+                "type", eventType,
+                "visitId", String.valueOf(visitId),
+                "startsAt", visit.getStartsAt().toString()));
+    data.putAll(extraData);
 
-    sendAfterCommit(
-        () ->
-            sendToOwner(
-                ownerUserId,
-                title,
-                body,
-                Map.of(
-                    "type", eventType,
-                    "visitId", String.valueOf(visitId),
-                    "startsAt", visit.getStartsAt().toString())));
+    sendToOwner(ownerUserId, title, body, data);
   }
 
   private void sendToOwner(Long ownerUserId, String title, String body, Map<String, String> data) {
     List<OwnerDeviceToken> deviceTokens =
         ownerDeviceTokenRepository.findAllByOwnerUserId(ownerUserId);
     if (deviceTokens.isEmpty()) {
+      log.info("No Firebase device tokens registered for ownerUserId={}", ownerUserId);
       return;
     }
 
@@ -103,11 +108,47 @@ public class MobilePushNotificationService {
 
     try {
       BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+      log.info(
+          "Firebase push notification result for ownerUserId={}. tokenCount={}, successCount={}, failureCount={}",
+          ownerUserId,
+          tokens.size(),
+          response.getSuccessCount(),
+          response.getFailureCount());
+      logFailedDeliveries(ownerUserId, deviceTokens, response);
       removeInvalidTokens(deviceTokens, response);
     } catch (IllegalStateException ex) {
-      log.warn("Firebase Admin SDK is not configured. Skipping mobile push notification.");
+      log.warn("Firebase Admin SDK is not configured. Skipping mobile push notification.", ex);
     } catch (FirebaseMessagingException ex) {
-      log.warn("Could not send Firebase push notification: {}", ex.getMessage());
+      log.warn(
+          "Could not send Firebase push notification for ownerUserId={}. errorCode={}, messagingErrorCode={}, message={}",
+          ownerUserId,
+          ex.getErrorCode(),
+          ex.getMessagingErrorCode(),
+          ex.getMessage(),
+          ex);
+    }
+  }
+
+  private void logFailedDeliveries(
+      Long ownerUserId, List<OwnerDeviceToken> deviceTokens, BatchResponse response) {
+    List<SendResponse> responses = response.getResponses();
+    for (int i = 0; i < responses.size(); i++) {
+      SendResponse sendResponse = responses.get(i);
+      if (sendResponse.isSuccessful()) {
+        continue;
+      }
+
+      OwnerDeviceToken deviceToken = deviceTokens.get(i);
+      FirebaseMessagingException exception = sendResponse.getException();
+      log.warn(
+          "Firebase token delivery failed for ownerUserId={}, tokenId={}, tokenPrefix={}, errorCode={}, messagingErrorCode={}, message={}",
+          ownerUserId,
+          deviceToken.getId(),
+          tokenPrefix(deviceToken.getToken()),
+          exception != null ? exception.getErrorCode() : null,
+          exception != null ? exception.getMessagingErrorCode() : null,
+          exception != null ? exception.getMessage() : null,
+          exception);
     }
   }
 
@@ -116,7 +157,13 @@ public class MobilePushNotificationService {
     for (int i = 0; i < responses.size(); i++) {
       SendResponse sendResponse = responses.get(i);
       if (!sendResponse.isSuccessful() && isInvalidTokenResponse(sendResponse)) {
-        ownerDeviceTokenRepository.delete(deviceTokens.get(i));
+        OwnerDeviceToken deviceToken = deviceTokens.get(i);
+        log.info(
+            "Removing invalid Firebase device token. tokenId={}, ownerUserId={}, tokenPrefix={}",
+            deviceToken.getId(),
+            deviceToken.getOwner().getUserId(),
+            tokenPrefix(deviceToken.getToken()));
+        ownerDeviceTokenRepository.delete(deviceToken);
       }
     }
   }
@@ -128,22 +175,14 @@ public class MobilePushNotificationService {
             || MessagingErrorCode.INVALID_ARGUMENT.equals(exception.getMessagingErrorCode()));
   }
 
-  private String formatVisitTime(Visit visit) {
-    return visit.getStartsAt().format(VISIT_TIME_FORMATTER);
+  private String tokenPrefix(String token) {
+    if (token == null) {
+      return null;
+    }
+    return token.substring(0, Math.min(18, token.length()));
   }
 
-  private void sendAfterCommit(Runnable sendNotification) {
-    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-      sendNotification.run();
-      return;
-    }
-
-    TransactionSynchronizationManager.registerSynchronization(
-        new TransactionSynchronization() {
-          @Override
-          public void afterCommit() {
-            sendNotification.run();
-          }
-        });
+  private String formatVisitTime(Visit visit) {
+    return visit.getStartsAt().format(VISIT_TIME_FORMATTER);
   }
 }

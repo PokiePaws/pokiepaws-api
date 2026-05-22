@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class OwnersSeeder implements Seeder {
 
   private final UserRepository userRepository;
@@ -94,6 +94,7 @@ public class OwnersSeeder implements Seeder {
                 .role(Role.OWNER)
                 .emailVerified(true)
                 .active(true)
+                .failedLoginAttempts(0)
                 .build());
 
     ownerRepository.save(

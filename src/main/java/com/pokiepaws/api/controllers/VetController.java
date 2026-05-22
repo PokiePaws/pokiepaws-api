@@ -1,19 +1,12 @@
 package com.pokiepaws.api.controllers;
 
-import com.pokiepaws.api.dto.animal.AnimalResponse;
-import com.pokiepaws.api.dto.vet.CreateVetVisitRequest;
-import com.pokiepaws.api.dto.vet.RegisterPatientRequest;
-import com.pokiepaws.api.dto.vet.VetMeResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
-import com.pokiepaws.api.dto.visit.VisitResponse;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -26,27 +19,6 @@ public class VetController {
   @GetMapping
   public List<Vet> getAll() {
     return vetService.getAll();
-  }
-
-  @GetMapping("/me")
-  @PreAuthorize("hasRole('VET')")
-  public VetMeResponse getMe(Authentication authentication) {
-    return vetService.getMe(authentication.getName());
-  }
-
-  @PostMapping("/me/visits")
-  @PreAuthorize("hasRole('VET')")
-  @ResponseStatus(HttpStatus.CREATED)
-  public VisitResponse createVisit(
-      Authentication authentication, @Valid @RequestBody CreateVetVisitRequest request) {
-    return vetService.createVisit(authentication.getName(), request);
-  }
-
-  @PostMapping("/me/patients")
-  @PreAuthorize("hasRole('VET')")
-  @ResponseStatus(HttpStatus.CREATED)
-  public AnimalResponse registerPatient(@Valid @RequestBody RegisterPatientRequest request) {
-    return vetService.registerPatient(request);
   }
 
   @GetMapping("/{id}")

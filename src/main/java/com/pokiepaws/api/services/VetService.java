@@ -64,10 +64,6 @@ public class VetService {
         .orElseThrow(() -> new EntityNotFoundException("Vet not found with id: " + id));
   }
 
-  public List<Vet> getByClinic(Long clinicId) {
-    return vetRepository.findAllByClinicId(clinicId);
-  }
-
   public List<VetListResponse> getListItemsByClinic(Long clinicId) {
     return vetRepository.findAllByClinicId(clinicId).stream()
         .map(

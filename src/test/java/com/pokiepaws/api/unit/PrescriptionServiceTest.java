@@ -6,7 +6,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.pokiepaws.api.dto.prescription.CreatePrescriptionRequest;
-import com.pokiepaws.api.dto.prescription.item.PrescriptionItemRequest;
+import com.pokiepaws.api.dto.prescription.PrescriptionItemRequest;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.ClinicStockItemRepository;
 import com.pokiepaws.api.repositories.PrescriptionRepository;

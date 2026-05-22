@@ -8,9 +8,16 @@ import com.pokiepaws.api.exceptions.ApiErrorMessage;
 import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.models.User;
+import com.pokiepaws.api.models.VisitStatus;
+import com.pokiepaws.api.repositories.AnimalRepository;
+import com.pokiepaws.api.repositories.OwnerDeviceTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
+import com.pokiepaws.api.repositories.RefreshTokenRepository;
 import com.pokiepaws.api.repositories.UserRepository;
+import com.pokiepaws.api.repositories.VisitRepository;
+import java.util.List;
 import java.util.Locale;
+import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +41,10 @@ public class OwnerProfileSettingsService {
   private final OwnerRepository ownerRepository;
   private final UserRepository userRepository;
   private final PasswordEncoder passwordEncoder;
+  private final RefreshTokenRepository refreshTokenRepository;
+  private final OwnerDeviceTokenRepository ownerDeviceTokenRepository;
+  private final AnimalRepository animalRepository;
+  private final VisitRepository visitRepository;
 
   @Transactional(readOnly = true)
   public OwnerProfileSettingsResponse getCurrentOwnerProfile() {
@@ -117,5 +128,45 @@ public class OwnerProfileSettingsService {
         throw ApiException.badRequest(PASSWORD_MUST_NOT_CONTAIN_EMAIL);
       }
     }
+  }
+
+  @Transactional
+  public void deleteCurrentOwnerAccount() {
+    Owner owner = getCurrentOwner();
+    User user = owner.getUser();
+    Long userId = owner.getUserId();
+
+    animalRepository.findAllByOwnerAndActiveTrue(owner).forEach(animal -> animal.setActive(false));
+
+    visitRepository
+        .findAllByAnimalOwnerUserIdAndStatusIn(
+            userId, List.of(VisitStatus.SCHEDULED, VisitStatus.CONFIRMED, VisitStatus.IN_PROGRESS))
+        .forEach(visit -> visit.setStatus(VisitStatus.CANCELLED));
+
+    ownerDeviceTokenRepository.deleteAllByOwnerUserId(userId);
+
+    refreshTokenRepository
+        .findAllByUserAndRevokedFalse(user)
+        .forEach(refreshToken -> refreshToken.setRevoked(true));
+
+    owner.setFirstName("Deleted");
+    owner.setLastName("Owner");
+    owner.setPhoneNumber("000000000");
+    owner.setStreet("-");
+    owner.setHouseNumber("-");
+    owner.setApartmentNumber(null);
+    owner.setPostalCode("00-000");
+    owner.setCity("-");
+    owner.setCountry("-");
+
+    user.setEmail("deleted-owner-" + userId + "@pokiepaws.local");
+    user.setPassword(passwordEncoder.encode(UUID.randomUUID().toString()));
+    user.setEmailVerified(false);
+    user.setActive(false);
+    user.setFailedLoginAttempts(0);
+    user.setLockedUntil(null);
+
+    ownerRepository.save(owner);
+    userRepository.save(user);
   }
 }

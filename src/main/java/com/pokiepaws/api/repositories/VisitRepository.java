@@ -3,6 +3,7 @@ package com.pokiepaws.api.repositories;
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.models.VisitStatus;
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -10,8 +11,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface VisitRepository extends JpaRepository<Visit, Long> {
   List<Visit> findAllByAnimalId(Long animalId);
-
-  List<Visit> findAllByVetUserId(Long vetUserId);
 
   List<Visit> findAllByVetUserIdAndStartsAtBetween(
       Long vetUserId, LocalDateTime start, LocalDateTime end);
@@ -35,22 +34,18 @@ public interface VisitRepository extends JpaRepository<Visit, Long> {
   List<Visit> findAllByAnimalOwnerUserIdAndStartsAtBetween(
       Long ownerUserId, LocalDateTime start, LocalDateTime end);
 
+  List<Visit> findAllByAnimalOwnerUserIdAndStatusIn(
+      Long ownerUserId, Collection<VisitStatus> statuses);
+
   List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtAfterOrderByStartsAtAsc(
       Long vetUserId, VisitStatus status, LocalDateTime startsAt);
 
   List<Visit> findAllByVetUserIdAndStatusNotAndStartsAtBetweenOrderByStartsAtAsc(
       Long vetUserId, VisitStatus status, LocalDateTime start, LocalDateTime end);
 
-  List<Visit> findAllByClinicId(Long clinicId);
+  List<Visit> findAllByStatusInAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      Collection<VisitStatus> statuses, LocalDateTime from, LocalDateTime to);
 
-  List<Visit> findAllByClinicIdAndStartsAtBetween(
-      Long clinicId, LocalDateTime from, LocalDateTime to);
-
-  List<Visit> findAllByStatus(VisitStatus status);
-
-  List<Visit> findAllByStatusAndReminder24hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
-      VisitStatus status, LocalDateTime from, LocalDateTime to);
-
-  List<Visit> findAllByStatusAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
-      VisitStatus status, LocalDateTime from, LocalDateTime to);
+  List<Visit> findAllByStatusInAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(
+      Collection<VisitStatus> statuses, LocalDateTime from, LocalDateTime to);
 }

@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class AdminSeeder implements Seeder {
 
   private final UserRepository userRepository;
@@ -46,6 +46,7 @@ public class AdminSeeder implements Seeder {
             .role(Role.ADMIN)
             .emailVerified(true)
             .active(true)
+            .failedLoginAttempts(0)
             .build();
 
     userRepository.save(admin);

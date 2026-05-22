@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class ClinicsSeeder implements Seeder {
 
   private final ClinicRepository clinicRepository;
@@ -62,7 +62,8 @@ public class ClinicsSeeder implements Seeder {
   private void getOrCreateClinic(ClinicSeedDto dto) {
     clinicRepository
         .findByClinicNameIgnoreCase(dto.getName())
-        .orElseGet(
+        .ifPresentOrElse(
+            clinic -> log.info("Clinic already exists: {}", dto.getName()),
             () ->
                 clinicRepository.save(
                     Clinic.builder()

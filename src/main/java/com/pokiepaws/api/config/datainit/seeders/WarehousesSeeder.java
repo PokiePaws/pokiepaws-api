@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class WarehousesSeeder implements Seeder {
 
   public static final String WAREHOUSE_MAIN = "PokiePaws Central Warehouse";
@@ -49,7 +49,8 @@ public class WarehousesSeeder implements Seeder {
   private void createWarehouseIfMissing(WarehouseSeedDto dto) {
     warehouseRepository
         .findByWarehouseNameIgnoreCase(dto.getName())
-        .orElseGet(
+        .ifPresentOrElse(
+            warehouse -> log.info("Warehouse already exists: {}", dto.getName()),
             () ->
                 warehouseRepository.save(
                     Warehouse.builder()

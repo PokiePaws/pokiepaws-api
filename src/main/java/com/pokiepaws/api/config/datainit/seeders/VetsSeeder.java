@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class VetsSeeder implements Seeder {
 
   private static final String CLINIC_WARSAW = "PokiePaws Warszawa";
@@ -103,6 +103,7 @@ public class VetsSeeder implements Seeder {
                 .role(Role.VET)
                 .emailVerified(true)
                 .active(true)
+                .failedLoginAttempts(0)
                 .build());
 
     vetRepository.save(

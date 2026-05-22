@@ -43,8 +43,7 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(DataIntegrityViolationException.class)
-  public ResponseEntity<ApiErrorResponse> handleDataIntegrity(
-      DataIntegrityViolationException ex, HttpServletRequest request) {
+  public ResponseEntity<ApiErrorResponse> handleDataIntegrity(HttpServletRequest request) {
     return build(HttpStatus.CONFLICT, DATA_CONFLICT, request, null);
   }
 

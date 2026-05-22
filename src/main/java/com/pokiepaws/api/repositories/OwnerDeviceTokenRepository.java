@@ -11,4 +11,6 @@ public interface OwnerDeviceTokenRepository extends JpaRepository<OwnerDeviceTok
   Optional<OwnerDeviceToken> findByToken(String token);
 
   void deleteByOwnerUserIdAndToken(Long ownerUserId, String token);
+
+  void deleteAllByOwnerUserId(Long ownerUserId);
 }

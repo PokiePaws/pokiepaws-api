@@ -22,7 +22,7 @@ import org.springframework.web.server.ResponseStatusException;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-@Profile({"dev", "local"})
+@Profile({"dev", "local", "prod"})
 public class WarehouseWorkersSeeder implements Seeder {
 
   private final UserRepository userRepository;
@@ -93,6 +93,7 @@ public class WarehouseWorkersSeeder implements Seeder {
                 .role(Role.WAREHOUSE)
                 .emailVerified(true)
                 .active(true)
+                .failedLoginAttempts(0)
                 .build());
 
     warehouseWorkerRepository.save(

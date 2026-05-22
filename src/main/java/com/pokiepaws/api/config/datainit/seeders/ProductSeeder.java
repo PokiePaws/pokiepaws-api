@@ -4,11 +4,15 @@ import com.pokiepaws.api.models.Product;
 import com.pokiepaws.api.repositories.ProductRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
+@Profile({"dev", "local", "prod"})
 public class ProductSeeder implements Seeder {
 
   private final ProductRepository productRepository;
@@ -28,8 +32,19 @@ public class ProductSeeder implements Seeder {
             Product.builder().name("Ear drops 10ml").unit("bottle").active(true).build(),
             Product.builder().name("Caniviton").unit("tablet").active(true).build());
 
+    log.info("ProductSeeder started. productsToEnsure={}", products.size());
+
+    int created = 0;
+
     for (Product p : products) {
-      productRepository.findByName(p.getName()).orElseGet(() -> productRepository.save(p));
+      boolean exists = productRepository.findByName(p.getName()).isPresent();
+      if (!exists) {
+        productRepository.save(p);
+        created++;
+        log.info("Product created: {}", p.getName());
+      }
     }
+
+    log.info("ProductSeeder finished. createdProducts={}", created);
   }
 }
