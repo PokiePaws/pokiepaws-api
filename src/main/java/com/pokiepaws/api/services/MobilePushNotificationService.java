@@ -16,8 +16,6 @@ import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.support.TransactionSynchronization;
-import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
@@ -74,16 +72,14 @@ public class MobilePushNotificationService {
     Long ownerUserId = visit.getAnimal().getOwner().getUserId();
     Long visitId = visit.getId();
 
-    sendAfterCommit(
-        () ->
-            sendToOwner(
-                ownerUserId,
-                title,
-                body,
-                Map.of(
-                    "type", eventType,
-                    "visitId", String.valueOf(visitId),
-                    "startsAt", visit.getStartsAt().toString())));
+    sendToOwner(
+        ownerUserId,
+        title,
+        body,
+        Map.of(
+            "type", eventType,
+            "visitId", String.valueOf(visitId),
+            "startsAt", visit.getStartsAt().toString()));
   }
 
   private void sendToOwner(Long ownerUserId, String title, String body, Map<String, String> data) {
@@ -103,11 +99,19 @@ public class MobilePushNotificationService {
 
     try {
       BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
+      log.info(
+          "Firebase push notification sent for ownerUserId={}. successCount={}, failureCount={}",
+          ownerUserId,
+          response.getSuccessCount(),
+          response.getFailureCount());
       removeInvalidTokens(deviceTokens, response);
     } catch (IllegalStateException ex) {
       log.warn("Firebase Admin SDK is not configured. Skipping mobile push notification.");
     } catch (FirebaseMessagingException ex) {
-      log.warn("Could not send Firebase push notification: {}", ex.getMessage());
+      log.warn(
+          "Could not send Firebase push notification for ownerUserId={}: {}",
+          ownerUserId,
+          ex.getMessage());
     }
   }
 
@@ -132,18 +136,4 @@ public class MobilePushNotificationService {
     return visit.getStartsAt().format(VISIT_TIME_FORMATTER);
   }
 
-  private void sendAfterCommit(Runnable sendNotification) {
-    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
-      sendNotification.run();
-      return;
-    }
-
-    TransactionSynchronizationManager.registerSynchronization(
-        new TransactionSynchronization() {
-          @Override
-          public void afterCommit() {
-            sendNotification.run();
-          }
-        });
-  }
 }
