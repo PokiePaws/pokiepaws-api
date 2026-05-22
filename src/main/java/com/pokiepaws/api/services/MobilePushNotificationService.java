@@ -94,6 +94,7 @@ public class MobilePushNotificationService {
     List<OwnerDeviceToken> deviceTokens =
         ownerDeviceTokenRepository.findAllByOwnerUserId(ownerUserId);
     if (deviceTokens.isEmpty()) {
+      log.info("No Firebase device tokens registered for ownerUserId={}", ownerUserId);
       return;
     }
 
@@ -108,18 +109,46 @@ public class MobilePushNotificationService {
     try {
       BatchResponse response = FirebaseMessaging.getInstance().sendEachForMulticast(message);
       log.info(
-          "Firebase push notification sent for ownerUserId={}. successCount={}, failureCount={}",
+          "Firebase push notification result for ownerUserId={}. tokenCount={}, successCount={}, failureCount={}",
           ownerUserId,
+          tokens.size(),
           response.getSuccessCount(),
           response.getFailureCount());
+      logFailedDeliveries(ownerUserId, deviceTokens, response);
       removeInvalidTokens(deviceTokens, response);
     } catch (IllegalStateException ex) {
-      log.warn("Firebase Admin SDK is not configured. Skipping mobile push notification.");
+      log.warn("Firebase Admin SDK is not configured. Skipping mobile push notification.", ex);
     } catch (FirebaseMessagingException ex) {
       log.warn(
-          "Could not send Firebase push notification for ownerUserId={}: {}",
+          "Could not send Firebase push notification for ownerUserId={}. errorCode={}, messagingErrorCode={}, message={}",
           ownerUserId,
-          ex.getMessage());
+          ex.getErrorCode(),
+          ex.getMessagingErrorCode(),
+          ex.getMessage(),
+          ex);
+    }
+  }
+
+  private void logFailedDeliveries(
+      Long ownerUserId, List<OwnerDeviceToken> deviceTokens, BatchResponse response) {
+    List<SendResponse> responses = response.getResponses();
+    for (int i = 0; i < responses.size(); i++) {
+      SendResponse sendResponse = responses.get(i);
+      if (sendResponse.isSuccessful()) {
+        continue;
+      }
+
+      OwnerDeviceToken deviceToken = deviceTokens.get(i);
+      FirebaseMessagingException exception = sendResponse.getException();
+      log.warn(
+          "Firebase token delivery failed for ownerUserId={}, tokenId={}, tokenPrefix={}, errorCode={}, messagingErrorCode={}, message={}",
+          ownerUserId,
+          deviceToken.getId(),
+          tokenPrefix(deviceToken.getToken()),
+          exception != null ? exception.getErrorCode() : null,
+          exception != null ? exception.getMessagingErrorCode() : null,
+          exception != null ? exception.getMessage() : null,
+          exception);
     }
   }
 
@@ -128,7 +157,13 @@ public class MobilePushNotificationService {
     for (int i = 0; i < responses.size(); i++) {
       SendResponse sendResponse = responses.get(i);
       if (!sendResponse.isSuccessful() && isInvalidTokenResponse(sendResponse)) {
-        ownerDeviceTokenRepository.delete(deviceTokens.get(i));
+        OwnerDeviceToken deviceToken = deviceTokens.get(i);
+        log.info(
+            "Removing invalid Firebase device token. tokenId={}, ownerUserId={}, tokenPrefix={}",
+            deviceToken.getId(),
+            deviceToken.getOwner().getUserId(),
+            tokenPrefix(deviceToken.getToken()));
+        ownerDeviceTokenRepository.delete(deviceToken);
       }
     }
   }
@@ -138,6 +173,13 @@ public class MobilePushNotificationService {
     return exception != null
         && (MessagingErrorCode.UNREGISTERED.equals(exception.getMessagingErrorCode())
             || MessagingErrorCode.INVALID_ARGUMENT.equals(exception.getMessagingErrorCode()));
+  }
+
+  private String tokenPrefix(String token) {
+    if (token == null) {
+      return null;
+    }
+    return token.substring(0, Math.min(18, token.length()));
   }
 
   private String formatVisitTime(Visit visit) {
