@@ -7,7 +7,9 @@ import com.pokiepaws.api.repositories.ActivityLogRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -74,6 +76,16 @@ public class ActivityLogService {
   @Transactional(readOnly = true)
   public long countToday() {
     return activityLogRepository.countByTimeAfter(LocalDate.now(clock).atStartOfDay());
+  }
+
+  @Transactional(readOnly = true)
+  public Map<String, Long> getStats() {
+    Map<String, Long> stats = new LinkedHashMap<>();
+    stats.put("today", countToday());
+    for (ActivityLog.LogType type : ActivityLog.LogType.values()) {
+      stats.put(type.name(), activityLogRepository.countByType(type));
+    }
+    return stats;
   }
 
   private ActivityLogResponse toDto(ActivityLog l) {

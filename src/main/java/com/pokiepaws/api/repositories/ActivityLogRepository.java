@@ -14,4 +14,6 @@ public interface ActivityLogRepository extends JpaRepository<ActivityLog, Long> 
   List<ActivityLog> findByTypeOrderByTimeDesc(LogType type, Pageable pageable);
 
   long countByTimeAfter(LocalDateTime from);
+
+  long countByType(LogType type);
 }

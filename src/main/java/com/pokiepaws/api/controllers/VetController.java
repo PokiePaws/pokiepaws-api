@@ -1,5 +1,6 @@
 package com.pokiepaws.api.controllers;
 
+import com.pokiepaws.api.dto.vet.VetMeResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
@@ -7,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,6 +17,12 @@ import org.springframework.web.bind.annotation.*;
 public class VetController {
 
   private final VetService vetService;
+
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('VET')")
+  public VetMeResponse getMe(Authentication authentication) {
+    return vetService.getMe(authentication.getName());
+  }
 
   @GetMapping
   public List<Vet> getAll() {

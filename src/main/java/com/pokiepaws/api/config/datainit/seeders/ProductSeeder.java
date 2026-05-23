@@ -57,11 +57,7 @@ public class ProductSeeder implements Seeder {
                 .active(true)
                 .build(),
             Product.builder().name("Selamektyna 45mg").unit("pipeta").active(true).build(),
-            Product.builder()
-                .name("Fipronil + S-metopren")
-                .unit("pipeta")
-                .active(true)
-                .build(),
+            Product.builder().name("Fipronil + S-metopren").unit("pipeta").active(true).build(),
             Product.builder().name("Afoksolaner 28,3mg").unit("tabletka").active(true).build(),
             Product.builder().name("Fluralaner 112,5mg").unit("tabletka").active(true).build(),
             Product.builder().name("Pyrantel 144mg").unit("tabletka").active(true).build(),
@@ -97,11 +93,7 @@ public class ProductSeeder implements Seeder {
             Product.builder().name("Lewotyroksyna 0,1mg").unit("tabletka").active(true).build(),
             Product.builder().name("Trilostane 60mg").unit("kapsułka").active(true).build(),
             Product.builder().name("Metymazol 5mg").unit("tabletka").active(true).build(),
-            Product.builder()
-                .name("Insulina canis 40 IU/ml")
-                .unit("fiolka")
-                .active(true)
-                .build(),
+            Product.builder().name("Insulina canis 40 IU/ml").unit("fiolka").active(true).build(),
             // Neurologiczne i uspokajające
             Product.builder().name("Fenobarbital 30mg").unit("tabletka").active(true).build(),
             Product.builder().name("Imepitoin 400mg").unit("tabletka").active(true).build(),

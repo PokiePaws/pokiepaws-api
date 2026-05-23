@@ -28,6 +28,8 @@ public class UserAdminRequest {
 
   private Long clinicId;
 
+  private Long warehouseId;
+
   @Builder.Default private boolean active = true;
 
   private String npwz;
