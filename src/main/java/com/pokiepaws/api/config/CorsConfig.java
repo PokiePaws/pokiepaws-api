@@ -24,6 +24,8 @@ public class CorsConfig {
 
     UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
     source.registerCorsConfiguration("/api/**", config);
+    source.registerCorsConfiguration("/api-docs", config);
+    source.registerCorsConfiguration("/api-docs/**", config);
     source.registerCorsConfiguration("/ws/**", config);
     source.registerCorsConfiguration("/ws-native/**", config);
     return source;
