@@ -58,14 +58,12 @@ class VisitServiceTest {
   private Animal animal;
   private Clinic clinic;
   private Vet vet;
-  private VisitValidator visitValidator;
-  private Clock clock;
 
   @BeforeEach
   void setUp() {
     VisitScheduleProperties visitScheduleProperties = new VisitScheduleProperties();
-    visitValidator = new VisitValidator(visitScheduleProperties, visitRepository);
-    clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
+    VisitValidator visitValidator = new VisitValidator(visitScheduleProperties, visitRepository);
+    Clock clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
 
     visitService =
         new VisitService(
@@ -107,7 +105,7 @@ class VisitServiceTest {
 
   @Test
   void create_shouldScheduleVisit_whenOwnerAnimalVetClinicAndSlotAreValid() {
-    authenticate("owner@pokiepaws.pl");
+    authenticate();
     CreateVisitRequest request = createVisitRequest(LocalDateTime.of(2026, 5, 11, 10, 0));
 
     when(ownerRepository.findByUserEmail("owner@pokiepaws.pl")).thenReturn(Optional.of(owner));
@@ -147,9 +145,10 @@ class VisitServiceTest {
     verify(ownerNotificationService, never()).visitConfirmed(any(Visit.class));
   }
 
-  private void authenticate(String email) {
+  private void authenticate() {
     SecurityContextHolder.getContext()
-        .setAuthentication(new UsernamePasswordAuthenticationToken(email, "password", List.of()));
+        .setAuthentication(
+            new UsernamePasswordAuthenticationToken("owner@pokiepaws.pl", "password", List.of()));
   }
 
   private CreateVisitRequest createVisitRequest(LocalDateTime startsAt) {
@@ -160,19 +159,5 @@ class VisitServiceTest {
     request.setStartsAt(startsAt);
     request.setDescription("Check");
     return request;
-  }
-
-  private Visit visit(Long id, VisitStatus status) {
-    return Visit.builder()
-        .id(id)
-        .animal(animal)
-        .clinic(clinic)
-        .vet(vet)
-        .startsAt(LocalDateTime.of(2026, 5, 11, 10, 0))
-        .endsAt(LocalDateTime.of(2026, 5, 11, 10, 30))
-        .description("Check")
-        .status(status)
-        .used(false)
-        .build();
   }
 }

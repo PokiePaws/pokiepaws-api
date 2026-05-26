@@ -26,21 +26,6 @@ public class EmailService {
             + "Best regards,\nThe PokiePaws team");
   }
 
-  public void sendForgotPasswordEmail(String to, String token, String baseUrl) {
-    sendEmail(
-        to,
-        "PokiePaws — Reset password",
-        "Hello! 🐾\n\n"
-            + "We have received a request to reset the password for your PokiePaws account.\n\n"
-            + "Click the link below to set a new password:\n\n"
-            + baseUrl
-            + "/api/auth/reset-password?token="
-            + token
-            + "\n\n"
-            + "If you haven’t requested a password reset, please ignore this message.\n\n"
-            + "Best regards,\nThe PokiePaws team");
-  }
-
   public void sendMfaLink(String to, String token, String frontendUrl) {
     sendEmail(
         to,

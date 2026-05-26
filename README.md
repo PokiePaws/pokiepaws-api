@@ -1,21 +1,109 @@
-# 🐾 PokiePaws API
+# PokiePaws API
 
-REST API dla platformy franczyzowej sieci gabinetów weterynaryjnych **PokiePaws**.
+REST API dla systemu PokiePaws, obslugujacego gabinety weterynaryjne, wizyty, wlascicieli zwierzat, weterynarzy, magazyn i powiadomienia.
 
----
+## Wymagania
 
-## 📋 Opis projektu
+- Java 21
+- Docker Desktop
+- Maven Wrapper z repozytorium (`mvnw` / `mvnw.cmd`)
 
-PokiePaws to system zarządzania siecią gabinetów weterynaryjnych działający w modelu franczyzowym. Firma centralna obsługuje wiele niezależnych gabinetów, które korzystają ze wspólnej infrastruktury, marki oraz systemu zamawiania produktów.
+## Konfiguracja
 
-System obsługuje **5 ról użytkowników**:
+Skopiuj plik przykladowy:
 
-| Rola | Aplikacja | Opis |
-|------|-----------|------|
-| `ADMIN` | Web | Administrator sieci — zarządza gabinetami i franczyzobiorcami |
-| `VET` | Web | Weterynarz — zarządza gabinetem, wizytami i zamówieniami |
-| `OWNER` | Mobilna | Właściciel zwierzęcia — wizyty, historia leczenia |
-| `WAREHOUSE` | Desktopowa | Pracownik magazynu — katalog produktów, zamówienia, dostawy |
-| `GUEST` | Web (publiczna) | Niezalogowany odwiedzający |
+```powershell
+Copy-Item .env.example .env
+```
 
----
+Przed uruchomieniem ustaw w `.env` klucz aplikacji:
+
+```text
+JWT_SECRET=replace-with-64-character-minimum-random-secret-value
+```
+
+Najwazniejsze zmienne w `.env`:
+
+- `APP_PORT=9090`
+- `SERVER_PORT=9090`
+- `POSTGRES_PORT=5432`
+- `MAILPIT_DASHBOARD_PORT=8025`
+- `JWT_SECRET` - klucz aplikacji uzywany do podpisywania tokenow JWT
+- `BASE_URL=http://localhost:9090`
+- `FRONTEND_URL=http://localhost:3000`
+
+## Uruchamianie
+
+Najprosciej uruchomic caly stack przez Docker Compose:
+
+```powershell
+docker compose up --build
+```
+
+API bedzie dostepne pod:
+
+```text
+http://localhost:9090
+```
+
+Health check:
+
+```text
+http://localhost:9090/actuator/health
+```
+
+## Porty
+
+| Usluga | Port |
+| --- | ---: |
+| API | `9090` |
+| PostgreSQL | `5432` |
+| Mailpit SMTP | `1025` |
+| Mailpit UI | `8025` |
+| Frontend | `3000` |
+
+## Dokumentacja API
+
+Dokumentacja API jest dostepna pod:
+
+```text
+https://docs.pokiepaws.pl
+```
+
+Lokalnie:
+
+```text
+http://localhost:9090/swagger-ui.html
+http://localhost:9090/api-docs
+http://localhost:9090/redoc.html
+```
+
+## Testy
+
+Wszystkie testy:
+
+```powershell
+.\mvnw.cmd test
+```
+
+Wybrana klasa testowa:
+
+```powershell
+.\mvnw.cmd "-Dtest=AuthServiceTest" test
+```
+
+Testy integracyjne z Testcontainers:
+
+```powershell
+.\mvnw.cmd "-Dtest=AuthControllerInitTests" test
+```
+
+Testy integracyjne uruchamiaja kontenery PostgreSQL i Mailpit, wiec Docker Desktop musi byc wlaczony.
+
+## Jakosc Kodu
+
+```powershell
+.\mvnw.cmd spotless:check
+.\mvnw.cmd spotless:apply
+.\mvnw.cmd verify
+```

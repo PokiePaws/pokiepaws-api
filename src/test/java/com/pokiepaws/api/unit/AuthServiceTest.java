@@ -7,16 +7,13 @@ import static org.mockito.Mockito.*;
 import com.pokiepaws.api.dto.auth.AuthRequest;
 import com.pokiepaws.api.dto.auth.AuthResponse;
 import com.pokiepaws.api.dto.auth.RegisterRequest;
-import com.pokiepaws.api.dto.auth.ResetPasswordRequest;
 import com.pokiepaws.api.models.EmailVerificationToken;
-import com.pokiepaws.api.models.ForgotPasswordToken;
 import com.pokiepaws.api.models.MfaToken;
 import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.models.RefreshToken;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
-import com.pokiepaws.api.repositories.ForgotPasswordTokenRepository;
 import com.pokiepaws.api.repositories.MfaTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.RefreshTokenRepository;
@@ -34,8 +31,6 @@ import java.util.Optional;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -63,7 +58,6 @@ class AuthServiceTest {
 
   @Mock EmailVerificationTokenRepository tokenRepository;
   @Mock EmailService emailService;
-  @Mock ForgotPasswordTokenRepository forgotPasswordTokenRepository;
   @Mock RefreshTokenRepository refreshTokenRepository;
   @Mock MfaTokenRepository mfaTokenRepository;
   @Mock ActivityLogService activityLogService;
@@ -84,7 +78,6 @@ class AuthServiceTest {
             authenticationManager,
             tokenRepository,
             emailService,
-            forgotPasswordTokenRepository,
             refreshTokenRepository,
             mfaTokenRepository,
             activityLogService);
@@ -115,22 +108,6 @@ class AuthServiceTest {
     request.setEmail(email);
     request.setPassword("Owner1234!");
     return request;
-  }
-
-  private ResetPasswordRequest resetRequest(String token, String newPassword) {
-    ResetPasswordRequest request = new ResetPasswordRequest();
-    ReflectionTestUtils.setField(request, "token", token);
-    ReflectionTestUtils.setField(request, "newPassword", newPassword);
-    return request;
-  }
-
-  private ForgotPasswordToken validForgotToken(User user, String tokenHash) {
-    return ForgotPasswordToken.builder()
-        .user(user)
-        .tokenHash(tokenHash)
-        .used(false)
-        .expiresAt(LocalDateTime.now(clock).plusMinutes(10))
-        .build();
   }
 
   @Test
@@ -317,7 +294,9 @@ class AuthServiceTest {
     when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
         .thenThrow(new BadCredentialsException("bad"));
 
-    assertThatThrownBy(() -> authService.login(authRequest("verified@pokiepaws.pl")))
+    AuthRequest request = authRequest("verified@pokiepaws.pl");
+
+    assertThatThrownBy(() -> authService.login(request))
         .isInstanceOf(ResponseStatusException.class)
         .satisfies(
             ex -> {
@@ -353,7 +332,9 @@ class AuthServiceTest {
     when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
         .thenThrow(new BadCredentialsException("bad"));
 
-    assertThatThrownBy(() -> authService.login(authRequest("verified@pokiepaws.pl")))
+    AuthRequest request = authRequest("verified@pokiepaws.pl");
+
+    assertThatThrownBy(() -> authService.login(request))
         .isInstanceOf(ResponseStatusException.class)
         .satisfies(
             ex -> {
@@ -381,7 +362,9 @@ class AuthServiceTest {
 
     when(userRepository.findByEmail("verified@pokiepaws.pl")).thenReturn(Optional.of(user));
 
-    assertThatThrownBy(() -> authService.login(authRequest("verified@pokiepaws.pl")))
+    AuthRequest request = authRequest("verified@pokiepaws.pl");
+
+    assertThatThrownBy(() -> authService.login(request))
         .isInstanceOf(ResponseStatusException.class)
         .satisfies(
             ex -> {
@@ -491,7 +474,9 @@ class AuthServiceTest {
                 MfaToken.builder().build(),
                 MfaToken.builder().build()));
 
-    assertThatThrownBy(() -> authService.login(authRequest("admin@pokiepaws.pl")))
+    AuthRequest request = authRequest("admin@pokiepaws.pl");
+
+    assertThatThrownBy(() -> authService.login(request))
         .isInstanceOf(ResponseStatusException.class)
         .satisfies(
             ex -> {
@@ -726,152 +711,5 @@ class AuthServiceTest {
 
     verify(userRepository).save(argThat(User::isEmailVerified));
     verify(tokenRepository).save(argThat(EmailVerificationToken::isUsed));
-  }
-
-  @Test
-  void forgotPassword_shouldDeleteOldTokensAndSendEmail_whenUserExists() {
-    User user = User.builder().email("forgotpassword@pokiepaws.pl").build();
-    when(userRepository.findByEmail("forgotpassword@pokiepaws.pl")).thenReturn(Optional.of(user));
-    when(passwordEncoder.encode(anyString())).thenReturn("NEW_HASH");
-
-    authService.forgotPassword("forgotpassword@pokiepaws.pl");
-
-    verify(forgotPasswordTokenRepository).deleteAllByUser(user);
-
-    ArgumentCaptor<ForgotPasswordToken> tokenArgumentCaptor =
-        ArgumentCaptor.forClass(ForgotPasswordToken.class);
-    verify(forgotPasswordTokenRepository).save(tokenArgumentCaptor.capture());
-
-    ForgotPasswordToken savedtoken = tokenArgumentCaptor.getValue();
-    assertThat(savedtoken.getUser()).isEqualTo(user);
-    assertThat(savedtoken.getTokenHash()).isEqualTo("NEW_HASH");
-    assertThat(savedtoken.isUsed()).isFalse();
-
-    LocalDateTime expected = LocalDateTime.now(clock).plusMinutes(15);
-    assertThat(savedtoken.getExpiresAt()).isEqualTo(expected);
-
-    ArgumentCaptor<String> plainTokenCap = ArgumentCaptor.forClass(String.class);
-    verify(emailService)
-        .sendForgotPasswordEmail(
-            eq("forgotpassword@pokiepaws.pl"), plainTokenCap.capture(), eq("${app.base-url}"));
-
-    assertThat(plainTokenCap.getValue()).isNotBlank();
-    assertThat(plainTokenCap.getValue()).isNotEqualTo("NEW_HASH");
-  }
-
-  @Test
-  void forgotPassword_shouldDoNothing_whenUserNotFound() {
-    when(userRepository.findByEmail("notfound@pokiepaws.pl")).thenReturn(Optional.empty());
-
-    authService.forgotPassword("notfound@pokiepaws.pl");
-
-    verify(forgotPasswordTokenRepository, never()).deleteAllByUser(any());
-    verify(forgotPasswordTokenRepository, never()).save(any());
-    verify(emailService, never()).sendForgotPasswordEmail(anyString(), anyString(), anyString());
-  }
-
-  @Test
-  void validateResetToken_shouldReturnTrue_whenAnyTokenMatches() {
-    ForgotPasswordToken tokenvalid = ForgotPasswordToken.builder().tokenHash("HASH").build();
-    when(forgotPasswordTokenRepository.findAllByUsedFalseAndExpiresAtAfter(
-            any(LocalDateTime.class)))
-        .thenReturn(List.of(tokenvalid));
-    when(passwordEncoder.matches("plain", "HASH")).thenReturn(true);
-
-    assertThat(authService.validateResetToken("plain")).isTrue();
-  }
-
-  @Test
-  void validateResetToken_shouldReturnFalse_whenNoTokenMatches() {
-    ForgotPasswordToken badtoken = ForgotPasswordToken.builder().tokenHash("HASH").build();
-    when(forgotPasswordTokenRepository.findAllByUsedFalseAndExpiresAtAfter(
-            any(LocalDateTime.class)))
-        .thenReturn(List.of(badtoken));
-    when(passwordEncoder.matches("plain", "HASH")).thenReturn(false);
-
-    assertThat(authService.validateResetToken("plain")).isFalse();
-  }
-
-  @Test
-  void resetPassword_shouldThrow400_whenTokenInvalidOrExpired() {
-    when(forgotPasswordTokenRepository.findAllByUsedFalseAndExpiresAtAfter(
-            any(LocalDateTime.class)))
-        .thenReturn(List.of());
-
-    ResetPasswordRequest request = resetRequest("badtoken", "Owner1234!");
-
-    assertThatThrownBy(() -> authService.resetPassword(request))
-        .isInstanceOf(ResponseStatusException.class)
-        .satisfies(
-            ex -> {
-              ResponseStatusException rse = (ResponseStatusException) ex;
-              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(rse.getReason()).isEqualTo("The token is invalid or has expired");
-            });
-
-    verify(userRepository, never()).save(any());
-    verify(forgotPasswordTokenRepository, never()).deleteAllByUser(any());
-  }
-
-  @ParameterizedTest(name = "Should throw 400 when password is \"{0}\" because {1}")
-  @MethodSource("invalidPasswordProvider")
-  void resetPassword_shouldThrow400_whenPasswordPolicyFails(
-      String invalidPassword, String expectedErrorMessage) {
-    User user = User.builder().email("owner@pokiepaws.pl").password("OLD").build();
-    ForgotPasswordToken resettoken = validForgotToken(user, "HASHED");
-
-    when(forgotPasswordTokenRepository.findAllByUsedFalseAndExpiresAtAfter(
-            any(LocalDateTime.class)))
-        .thenReturn(List.of(resettoken));
-    when(passwordEncoder.matches("passwordresettoken", "HASHED")).thenReturn(true);
-
-    ResetPasswordRequest request = resetRequest("passwordresettoken", invalidPassword);
-
-    assertThatThrownBy(() -> authService.resetPassword(request))
-        .isInstanceOf(ResponseStatusException.class)
-        .satisfies(
-            ex -> {
-              ResponseStatusException rse = (ResponseStatusException) ex;
-              assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(rse.getReason()).isEqualTo(expectedErrorMessage);
-            });
-
-    verify(userRepository, never()).save(any());
-    verify(forgotPasswordTokenRepository, never()).deleteAllByUser(any());
-  }
-
-  private static java.util.stream.Stream<org.junit.jupiter.params.provider.Arguments>
-      invalidPasswordProvider() {
-    return java.util.stream.Stream.of(
-        org.junit.jupiter.params.provider.Arguments.of(
-            "lowercase1234!", "The password must contain at least one uppercase letter"),
-        org.junit.jupiter.params.provider.Arguments.of(
-            "Aa1!", "The password must be at least 8 characters long"),
-        org.junit.jupiter.params.provider.Arguments.of(
-            "Password!", "The password must contain a number"),
-        org.junit.jupiter.params.provider.Arguments.of(
-            "Password1234", "The password must contain a special character"),
-        org.junit.jupiter.params.provider.Arguments.of(
-            "owner@pokiepaws.plA1!", "The password must not contain an email address"));
-  }
-
-  @Test
-  void resetPassword_shouldUpdatePassword_whenAllValid() {
-    User user = User.builder().email("newcorrectpassword@pokiepaws.pl").password("OLD").build();
-    ForgotPasswordToken passwordresettoken = validForgotToken(user, "HASH");
-
-    when(forgotPasswordTokenRepository.findAllByUsedFalseAndExpiresAtAfter(
-            any(LocalDateTime.class)))
-        .thenReturn(List.of(passwordresettoken));
-    when(passwordEncoder.matches("token", "HASH")).thenReturn(true);
-    when(passwordEncoder.encode("NewPassword1234!")).thenReturn("NEW_HASH");
-
-    ResetPasswordRequest request = resetRequest("token", "NewPassword1234!");
-
-    authService.resetPassword(request);
-
-    assertThat(user.getPassword()).isEqualTo("NEW_HASH");
-    verify(userRepository).save(user);
-    verify(forgotPasswordTokenRepository).deleteAllByUser(user);
   }
 }

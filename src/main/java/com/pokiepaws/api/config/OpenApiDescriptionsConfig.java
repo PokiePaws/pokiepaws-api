@@ -81,40 +81,6 @@ public class OpenApiDescriptionsConfig {
               "**Dostęp:** publiczny, bez tokenu JWT."));
       describe(
           openApi,
-          "/api/auth/forgot-password",
-          PathItem.HttpMethod.POST,
-          "Żądanie resetu hasła",
-          desc(
-              "Rozpoczyna proces resetowania hasła dla konta powiązanego z podanym adresem e-mail.",
-              "System wysyła wiadomość z linkiem resetującym, jeśli konto może przejść przez procedurę resetu.",
-              "",
-              "**Użycie:** formularz „Nie pamiętasz hasła?”.",
-              "**Dostęp:** publiczny, bez tokenu JWT."));
-      describe(
-          openApi,
-          "/api/auth/reset-password",
-          PathItem.HttpMethod.GET,
-          "Przekierowanie do resetu hasła",
-          desc(
-              "Sprawdza token resetu hasła i przekierowuje użytkownika do odpowiedniego widoku aplikacji frontendowej.",
-              "Poprawny token trafia do ekranu ustawiania nowego hasła, a niepoprawny token do widoku błędu.",
-              "",
-              "**Użycie:** link klikany z wiadomości e-mail resetującej hasło.",
-              "**Dostęp:** publiczny, bez tokenu JWT."));
-      describe(
-          openApi,
-          "/api/auth/reset-password",
-          PathItem.HttpMethod.POST,
-          "Reset hasła",
-          desc(
-              "Ustawia nowe hasło użytkownika na podstawie poprawnego tokenu resetującego.",
-              "Endpoint powinien być wywoływany po otwarciu formularza resetu hasła i podaniu nowego hasła przez użytkownika.",
-              "",
-              "**Użycie:** finalny krok procesu resetowania hasła.",
-              "**Dostęp:** publiczny, bez tokenu JWT."));
-
-      describe(
-          openApi,
           "/api/clinics",
           PathItem.HttpMethod.GET,
           "Lista klinik",
