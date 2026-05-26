@@ -3,17 +3,14 @@ package com.pokiepaws.api.services;
 import com.pokiepaws.api.dto.auth.AuthRequest;
 import com.pokiepaws.api.dto.auth.AuthResponse;
 import com.pokiepaws.api.dto.auth.RegisterRequest;
-import com.pokiepaws.api.dto.auth.ResetPasswordRequest;
 import com.pokiepaws.api.models.ActivityLog.LogType;
 import com.pokiepaws.api.models.EmailVerificationToken;
-import com.pokiepaws.api.models.ForgotPasswordToken;
 import com.pokiepaws.api.models.MfaToken;
 import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.models.RefreshToken;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.repositories.EmailVerificationTokenRepository;
-import com.pokiepaws.api.repositories.ForgotPasswordTokenRepository;
 import com.pokiepaws.api.repositories.MfaTokenRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.RefreshTokenRepository;
@@ -25,7 +22,6 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
-import java.util.Locale;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -50,8 +46,6 @@ public class AuthService {
   private static final String INVALID_TOKEN = "Invalid token";
   private static final String TOKEN_ALREADY_USED = "The token has already been used";
   private static final String TOKEN_EXPIRED = "The token has expired";
-  private static final String RESET_TOKEN_INVALID_OR_EXPIRED =
-      "The token is invalid or has expired";
   private static final String ACCOUNT_INACTIVE = "The account is inactive";
   private static final String MFA_TOKEN_INVALID_OR_EXPIRED =
       "The 2FA token is invalid or has expired";
@@ -65,16 +59,6 @@ public class AuthService {
   private static final int MAX_FAILED_LOGIN_ATTEMPTS = 5;
   private static final int LOGIN_LOCK_MINUTES = 15;
 
-  private static final String PASSWORD_MIN_LENGTH =
-      "The password must be at least 8 characters long";
-  private static final String PASSWORD_NEEDS_UPPERCASE =
-      "The password must contain at least one uppercase letter";
-  private static final String PASSWORD_NEEDS_NUMBER = "The password must contain a number";
-  private static final String PASSWORD_NEEDS_SPECIAL =
-      "The password must contain a special character";
-  private static final String PASSWORD_MUST_NOT_CONTAIN_EMAIL =
-      "The password must not contain an email address";
-
   private final Clock clock;
   private final UserRepository userRepository;
   private final OwnerRepository ownerRepository;
@@ -84,7 +68,6 @@ public class AuthService {
   private final AuthenticationManager authenticationManager;
   private final EmailVerificationTokenRepository tokenRepository;
   private final EmailService emailService;
-  private final ForgotPasswordTokenRepository forgotPasswordTokenRepository;
   private final RefreshTokenRepository refreshTokenRepository;
   private final MfaTokenRepository mfaTokenRepository;
   private final ActivityLogService activityLogService;
@@ -281,57 +264,6 @@ public class AuthService {
     return "Your email address has been confirmed! You can now log in.";
   }
 
-  @Transactional
-  public void forgotPassword(String email) {
-    userRepository
-        .findByEmail(email)
-        .ifPresent(
-            user -> {
-              forgotPasswordTokenRepository.deleteAllByUser(user);
-              String plainToken = generateSecureToken();
-
-              ForgotPasswordToken resetToken =
-                  ForgotPasswordToken.builder()
-                      .tokenHash(passwordEncoder.encode(plainToken))
-                      .user(user)
-                      .expiresAt(LocalDateTime.now(clock).plusMinutes(15))
-                      .used(false)
-                      .build();
-
-              forgotPasswordTokenRepository.save(resetToken);
-              emailService.sendForgotPasswordEmail(user.getEmail(), plainToken, baseUrl);
-            });
-  }
-
-  @Transactional(readOnly = true)
-  public boolean validateResetToken(String plainToken) {
-    return forgotPasswordTokenRepository
-        .findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now(clock))
-        .stream()
-        .anyMatch(t -> passwordEncoder.matches(plainToken, t.getTokenHash()));
-  }
-
-  @Transactional
-  public void resetPassword(ResetPasswordRequest request) {
-    ForgotPasswordToken resetToken =
-        forgotPasswordTokenRepository
-            .findAllByUsedFalseAndExpiresAtAfter(LocalDateTime.now(clock))
-            .stream()
-            .filter(t -> passwordEncoder.matches(request.getToken(), t.getTokenHash()))
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new ResponseStatusException(
-                        HttpStatus.BAD_REQUEST, RESET_TOKEN_INVALID_OR_EXPIRED));
-
-    User user = resetToken.getUser();
-    validatePasswordPolicy(request.getNewPassword(), user.getEmail());
-
-    user.setPassword(passwordEncoder.encode(request.getNewPassword()));
-    userRepository.save(user);
-    forgotPasswordTokenRepository.deleteAllByUser(user);
-  }
-
   private String generateSecureToken() {
     byte[] bytes = new byte[36];
     SECURE_RANDOM.nextBytes(bytes);
@@ -417,28 +349,5 @@ public class AuthService {
         .password(user.getPassword())
         .authorities("ROLE_" + user.getRole().name())
         .build();
-  }
-
-  private void validatePasswordPolicy(String password, String email) {
-    if (password.length() < 8) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PASSWORD_MIN_LENGTH);
-    }
-    if (!password.matches(".*[A-Z].*")) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PASSWORD_NEEDS_UPPERCASE);
-    }
-    if (!password.matches(".*\\d.*")) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PASSWORD_NEEDS_NUMBER);
-    }
-    if (!password.matches(".*[!@#$%^&*()].*")) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PASSWORD_NEEDS_SPECIAL);
-    }
-
-    if (email != null) {
-      String passwordLower = password.toLowerCase(Locale.ROOT);
-      String emailLower = email.toLowerCase(Locale.ROOT);
-      if (passwordLower.contains(emailLower)) {
-        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, PASSWORD_MUST_NOT_CONTAIN_EMAIL);
-      }
-    }
   }
 }

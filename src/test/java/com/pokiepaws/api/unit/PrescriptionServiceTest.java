@@ -49,7 +49,6 @@ class PrescriptionServiceTest {
   @Mock OwnerNotificationService ownerNotificationService;
 
   private PrescriptionService prescriptionService;
-  private PrescriptionValidator prescriptionValidator;
   private Clinic clinic;
   private Vet vet;
   private Visit visit;
@@ -59,7 +58,7 @@ class PrescriptionServiceTest {
   @BeforeEach
   void setUp() {
     Clock clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
-    prescriptionValidator = new PrescriptionValidator(prescriptionRepository);
+    PrescriptionValidator prescriptionValidator = new PrescriptionValidator(prescriptionRepository);
     prescriptionService =
         new PrescriptionService(
             clock,
