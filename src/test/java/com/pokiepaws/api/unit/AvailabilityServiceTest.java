@@ -39,7 +39,10 @@ class AvailabilityServiceTest {
   void setUp() {
     availabilityService =
         new AvailabilityService(
-            vetRepository, visitRepository, new VisitScheduleProperties(), vetWorkingHoursRepository);
+            vetRepository,
+            visitRepository,
+            new VisitScheduleProperties(),
+            vetWorkingHoursRepository);
   }
 
   @Test
