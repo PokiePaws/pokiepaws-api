@@ -30,6 +30,6 @@ public class ActivityLogController {
 
   @GetMapping("/stats")
   public ResponseEntity<Map<String, Long>> stats() {
-    return ResponseEntity.ok(Map.of("today", activityLogService.countToday()));
+    return ResponseEntity.ok(activityLogService.getStats());
   }
 }

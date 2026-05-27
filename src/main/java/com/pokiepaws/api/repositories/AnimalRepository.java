@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface AnimalRepository extends JpaRepository<Animal, Long> {
 
+  List<Animal> findAllByActiveTrue();
+
   List<Animal> findAllByOwnerAndActiveTrue(Owner owner);
 
   Optional<Animal> findByIdAndOwnerAndActiveTrue(Long id, Owner owner);
@@ -15,4 +17,8 @@ public interface AnimalRepository extends JpaRepository<Animal, Long> {
   List<Animal> findAllByOwnerUserIdAndActiveTrue(Long ownerUserId);
 
   Optional<Animal> findByMicrochipNumber(String microchipNumber);
+
+  @Query(
+      "SELECT DISTINCT a FROM Animal a JOIN Visit v ON v.animal = a WHERE v.clinic.id = :clinicId AND a.active = true ORDER BY a.name")
+  List<Animal> findDistinctByClinicIdViaVisits(@Param("clinicId") Long clinicId);
 }

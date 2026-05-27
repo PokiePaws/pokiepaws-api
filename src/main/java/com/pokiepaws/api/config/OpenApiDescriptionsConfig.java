@@ -657,6 +657,61 @@ public class OpenApiDescriptionsConfig {
               "Operacja powinna być używana ostrożnie, ponieważ usuwa rekord stanu magazynowego z systemu.",
               "",
               "**Dostęp:** pracownik magazynu."));
+
+      describe(
+          openApi,
+          "/api/animals/{animalId}/lab-orders",
+          PathItem.HttpMethod.POST,
+          "Utworzenie zlecenia laboratoryjnego",
+          desc(
+              "Tworzy nowe zlecenie laboratoryjne dla wskazanego zwierzęcia.",
+              "Zlecenie jest automatycznie przypisywane do kliniki zalogowanego weterynarza. Po zapisaniu system tworzy odpowiadające zamówienie asortymentu w module magazynowym (status PENDING) i wysyła powiadomienie realtime do lekarza oraz kliniki.",
+              "",
+              "Pole `priority` przyjmuje wartości: `NORMAL`, `HIGH`, `URGENT`.",
+              "",
+              "**Dostęp:** weterynarz lub administrator."));
+      describe(
+          openApi,
+          "/api/animals/{animalId}/lab-orders",
+          PathItem.HttpMethod.GET,
+          "Zlecenia laboratoryjne zwierzęcia",
+          desc(
+              "Zwraca listę wszystkich zleceń laboratoryjnych dla wskazanego zwierzęcia, posortowaną od najnowszych.",
+              "Odpowiedź zawiera historię zmian statusu każdego zlecenia.",
+              "",
+              "**Dostęp:** weterynarz, administrator lub właściciel zwierzęcia."));
+      describe(
+          openApi,
+          "/api/clinics/{clinicId}/lab-orders",
+          PathItem.HttpMethod.GET,
+          "Zlecenia laboratoryjne kliniki",
+          desc(
+              "Zwraca listę wszystkich zleceń laboratoryjnych przypisanych do wskazanej kliniki, posortowaną od najnowszych.",
+              "Odpowiedź zawiera dane pacjenta, weterynarza, status, priorytet, powiązane zamówienie magazynowe (`warehouseOrderId`) oraz historię zmian statusu każdego zlecenia.",
+              "",
+              "**Dostęp:** weterynarz lub administrator."));
+      describe(
+          openApi,
+          "/api/lab-orders/{id}",
+          PathItem.HttpMethod.GET,
+          "Szczegóły zlecenia laboratoryjnego",
+          desc(
+              "Zwraca szczegóły pojedynczego zlecenia laboratoryjnego wskazanego identyfikatorem.",
+              "Odpowiedź zawiera pełną historię zmian statusu.",
+              "",
+              "**Dostęp:** weterynarz lub administrator."));
+      describe(
+          openApi,
+          "/api/lab-orders/{id}/status",
+          PathItem.HttpMethod.PATCH,
+          "Zmiana statusu zlecenia laboratoryjnego",
+          desc(
+              "Zmienia status zlecenia laboratoryjnego zgodnie z dozwolonym przepływem.",
+              "Dozwolone przejścia: `PENDING` → `CONFIRMED` lub `CANCELLED`, `CONFIRMED` → `IN_PROGRESS` lub `CANCELLED`, `IN_PROGRESS` → `COMPLETED` lub `CANCELLED`. Statusy `COMPLETED` i `CANCELLED` są terminalne — dalsze zmiany są blokowane (400 Bad Request).",
+              "",
+              "Każda zmiana statusu jest zapisywana w historii zlecenia wraz z adresem e-mail użytkownika dokonującego zmiany. Po każdej zmianie system wysyła powiadomienie realtime do kliniki.",
+              "",
+              "**Dostęp:** weterynarz lub administrator."));
     };
   }
 

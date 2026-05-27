@@ -4,6 +4,7 @@ import com.pokiepaws.api.dto.auth.ActivityLogResponse;
 import com.pokiepaws.api.dto.realtime.RealtimeEventType;
 import com.pokiepaws.api.dto.realtime.RealtimeNotification;
 import com.pokiepaws.api.models.ClinicStockItem;
+import com.pokiepaws.api.models.LabOrder;
 import com.pokiepaws.api.models.Prescription;
 import com.pokiepaws.api.models.Visit;
 import java.time.Clock;
@@ -128,6 +129,51 @@ public class RealtimeNotificationService {
           sendToClinic(clinicId, "stock", notification);
           messagingTemplate.convertAndSend("/topic/warehouse/stock", notification);
         });
+  }
+
+  public void publishLabOrderCreated(LabOrder labOrder) {
+    Long clinicId = labOrder.getClinic().getId();
+    String vetEmail = labOrder.getVet().getUser().getEmail();
+
+    RealtimeNotification notification =
+        buildNotification(
+            RealtimeEventType.LAB_ORDER_CREATED,
+            labOrder.getId(),
+            "Lab order created",
+            Map.of(
+                KEY_CLINIC_ID,
+                clinicId,
+                KEY_ANIMAL_ID,
+                labOrder.getAnimal().getId(),
+                "testType",
+                labOrder.getTestType(),
+                "priority",
+                labOrder.getPriority().name()));
+
+    sendAfterCommit(
+        () -> {
+          sendToUser(vetEmail, notification);
+          sendToClinic(clinicId, "lab-orders", notification);
+        });
+  }
+
+  public void publishLabOrderStatusUpdated(LabOrder labOrder) {
+    Long clinicId = labOrder.getClinic().getId();
+
+    RealtimeNotification notification =
+        buildNotification(
+            RealtimeEventType.LAB_ORDER_STATUS_UPDATED,
+            labOrder.getId(),
+            "Lab order status updated",
+            Map.of(
+                KEY_CLINIC_ID,
+                clinicId,
+                KEY_ANIMAL_ID,
+                labOrder.getAnimal().getId(),
+                "status",
+                labOrder.getStatus().name()));
+
+    sendAfterCommit(() -> sendToClinic(clinicId, "lab-orders", notification));
   }
 
   public void publishActivityLogCreated(ActivityLogResponse activityLog) {

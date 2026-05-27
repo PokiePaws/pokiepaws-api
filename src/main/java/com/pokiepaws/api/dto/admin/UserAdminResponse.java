@@ -20,6 +20,8 @@ public class UserAdminResponse {
   private String role;
   private Long clinicId;
   private String clinicName;
+  private Long warehouseId;
+  private String warehouseName;
   private boolean active;
   private boolean emailVerified;
   private String npwz;
