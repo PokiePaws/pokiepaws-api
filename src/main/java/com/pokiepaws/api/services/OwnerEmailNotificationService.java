@@ -35,6 +35,15 @@ public class OwnerEmailNotificationService {
         "The visit is scheduled for " + formatVisitTime(visit) + " has been canceled.");
   }
 
+  public void sendVisitCancelledByVet(Visit visit) {
+    sendVisitEmail(
+        visit,
+        "PokiePaws - Wizyta odwolana przez weterynarza",
+        "Weterynarz odwolal Twoja wizyte w dniu "
+            + formatVisitTime(visit)
+            + ". Prosimy o umowienie wizyty w innym terminie.");
+  }
+
   public void sendVisitReminder(Visit visit) {
     sendVisitEmail(
         visit,

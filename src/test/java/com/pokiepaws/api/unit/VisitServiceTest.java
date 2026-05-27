@@ -20,6 +20,7 @@ import com.pokiepaws.api.repositories.ClinicRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
+import com.pokiepaws.api.repositories.VetWorkingHoursRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
 import com.pokiepaws.api.services.OwnerNotificationService;
 import com.pokiepaws.api.services.RealtimeNotificationService;
@@ -52,6 +53,7 @@ class VisitServiceTest {
   @Mock UserRepository userRepository;
   @Mock RealtimeNotificationService realtimeNotificationService;
   @Mock OwnerNotificationService ownerNotificationService;
+  @Mock VetWorkingHoursRepository vetWorkingHoursRepository;
 
   private VisitService visitService;
   private Owner owner;
@@ -62,7 +64,8 @@ class VisitServiceTest {
   @BeforeEach
   void setUp() {
     VisitScheduleProperties visitScheduleProperties = new VisitScheduleProperties();
-    VisitValidator visitValidator = new VisitValidator(visitScheduleProperties, visitRepository);
+    VisitValidator visitValidator =
+        new VisitValidator(visitScheduleProperties, visitRepository, vetWorkingHoursRepository);
     Clock clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
 
     visitService =

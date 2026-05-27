@@ -52,6 +52,7 @@ public class ClinicService {
             vet ->
                 VetResponse.builder()
                     .id(vet.getUserId())
+                    .userId(vet.getUserId())
                     .email(vet.getUser() != null ? vet.getUser().getEmail() : null)
                     .firstName(vet.getFirstName())
                     .lastName(vet.getLastName())

@@ -6,6 +6,7 @@ public final class ApiErrorMessage {
   public static final String ANIMAL_NOT_OWNED = "You are not the owner of this animal";
   public static final String CANCEL_FORBIDDEN = "You cannot cancel this visit";
   public static final String CANCELLED_VISIT_CONFIRM_FORBIDDEN = "Cannot confirm cancelled visit";
+  public static final String CANCELLED_VISIT_CANCEL_FORBIDDEN = "Visit is already cancelled";
   public static final String CANCELLED_VISIT_UPDATE_FORBIDDEN = "Cannot update cancelled visit";
   public static final String CLINIC_NOT_FOUND = "Clinic not found";
   public static final String DATE_RANGE_INVALID = "'from' must be <= 'to'";

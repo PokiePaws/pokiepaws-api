@@ -2,6 +2,7 @@ package com.pokiepaws.api.services;
 
 import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
+import com.pokiepaws.api.dto.vet.VetResponse;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.models.Vet;
@@ -32,6 +33,27 @@ public class VetService {
     return vetRepository
         .findById(id)
         .orElseThrow(() -> new EntityNotFoundException("Vet not found with id: " + id));
+  }
+
+  @Transactional(readOnly = true)
+  public VetResponse getCurrentVet(String email) {
+    Vet vet =
+        vetRepository
+            .findByUserEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("Vet not found for current user"));
+
+    return VetResponse.builder()
+        .id(vet.getUserId())
+        .userId(vet.getUserId())
+        .email(vet.getUser() != null ? vet.getUser().getEmail() : null)
+        .firstName(vet.getFirstName())
+        .lastName(vet.getLastName())
+        .phone(vet.getPhone())
+        .npwz(vet.getNpwz())
+        .specialization(vet.getSpecialization())
+        .clinicId(vet.getClinic() != null ? vet.getClinic().getId() : null)
+        .clinicName(vet.getClinic() != null ? vet.getClinic().getClinicName() : null)
+        .build();
   }
 
   public List<VetListResponse> getListItemsByClinic(Long clinicId) {

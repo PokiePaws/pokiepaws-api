@@ -2,12 +2,14 @@ package com.pokiepaws.api.controllers;
 
 import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
+import com.pokiepaws.api.dto.vet.VetResponse;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
 import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -25,6 +27,12 @@ public class VetController {
   @GetMapping("/{id}")
   public Vet getById(@PathVariable Long id) {
     return vetService.getById(id);
+  }
+
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('VET')")
+  public VetResponse getMe(Authentication authentication) {
+    return vetService.getCurrentVet(authentication.getName());
   }
 
   @GetMapping("/clinic/{clinicId}")

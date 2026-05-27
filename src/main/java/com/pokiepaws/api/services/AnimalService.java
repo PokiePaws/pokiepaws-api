@@ -6,10 +6,12 @@ import com.pokiepaws.api.models.Animal;
 import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.repositories.AnimalRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
+import com.pokiepaws.api.repositories.VetRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +26,7 @@ public class AnimalService {
 
   private final AnimalRepository animalRepository;
   private final OwnerRepository ownerRepository;
+  private final VetRepository vetRepository;
 
   private Owner getCurrentOwner() {
     var auth = SecurityContextHolder.getContext().getAuthentication();
@@ -59,6 +62,19 @@ public class AnimalService {
 
   @Transactional(readOnly = true)
   public AnimalResponse getAnimal(Long id) {
+    var auth = SecurityContextHolder.getContext().getAuthentication();
+    if (hasRole(auth, "ROLE_VET") || hasRole(auth, "ROLE_ADMIN")) {
+      Animal animal =
+          animalRepository
+              .findByIdAndActiveTrue(id)
+              .orElseThrow(
+                  () -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND));
+      if (hasRole(auth, "ROLE_ADMIN") || currentVetCanAccessAnimal(auth.getName(), animal)) {
+        return toResponse(animal);
+      }
+      throw new AccessDeniedException("Vet cannot access patient from another clinic");
+    }
+
     Animal animal =
         animalRepository
             .findByIdAndOwnerAndActiveTrue(id, getCurrentOwner())
@@ -69,6 +85,14 @@ public class AnimalService {
   @Transactional(readOnly = true)
   public List<AnimalResponse> getAnimalsByOwner(Long ownerId) {
     return animalRepository.findAllByOwnerUserIdAndActiveTrue(ownerId).stream()
+        .map(this::toResponse)
+        .toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<AnimalResponse> getPatientsByClinic(Long clinicId) {
+    ensureCurrentUserCanAccessClinicPatients(clinicId);
+    return animalRepository.findDistinctActivePatientsByClinicId(clinicId).stream()
         .map(this::toResponse)
         .toList();
   }
@@ -146,6 +170,43 @@ public class AnimalService {
                     HttpStatus.CONFLICT, "Microchip number already exists");
               }
             });
+  }
+
+  private void ensureCurrentUserCanAccessClinicPatients(Long clinicId) {
+    var auth = SecurityContextHolder.getContext().getAuthentication();
+    if (hasRole(auth, "ROLE_ADMIN")) {
+      return;
+    }
+
+    var vet =
+        vetRepository
+            .findByUserEmail(auth.getName())
+            .orElseThrow(() -> new AccessDeniedException("Vet profile not found"));
+
+    if (vet.getClinic() == null || !clinicId.equals(vet.getClinic().getId())) {
+      throw new AccessDeniedException("Vet cannot access patients from another clinic");
+    }
+  }
+
+  private boolean currentVetCanAccessAnimal(String email, Animal animal) {
+    var vet =
+        vetRepository
+            .findByUserEmail(email)
+            .orElseThrow(() -> new AccessDeniedException("Vet profile not found"));
+
+    Long clinicId = vet.getClinic() != null ? vet.getClinic().getId() : null;
+    if (clinicId == null) {
+      return false;
+    }
+
+    return animalRepository.findDistinctActivePatientsByClinicId(clinicId).stream()
+        .anyMatch(patient -> patient.getId().equals(animal.getId()));
+  }
+
+  private boolean hasRole(org.springframework.security.core.Authentication auth, String role) {
+    return auth != null
+        && auth.getAuthorities().stream()
+            .anyMatch(authority -> role.equals(authority.getAuthority()));
   }
 
   private AnimalResponse toResponse(Animal animal) {
