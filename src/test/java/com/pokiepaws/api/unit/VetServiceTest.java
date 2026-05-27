@@ -11,14 +11,10 @@ import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.models.Vet;
-import com.pokiepaws.api.repositories.AnimalRepository;
 import com.pokiepaws.api.repositories.ClinicRepository;
-import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
-import com.pokiepaws.api.repositories.VisitRepository;
 import com.pokiepaws.api.services.VetService;
-import com.pokiepaws.api.validators.VisitValidator;
 import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import java.util.Optional;
@@ -28,7 +24,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.crypto.password.PasswordEncoder;
 
 @ExtendWith(MockitoExtension.class)
 class VetServiceTest {
@@ -36,27 +31,13 @@ class VetServiceTest {
   @Mock VetRepository vetRepository;
   @Mock ClinicRepository clinicRepository;
   @Mock UserRepository userRepository;
-  @Mock OwnerRepository ownerRepository;
-  @Mock AnimalRepository animalRepository;
-  @Mock VisitRepository visitRepository;
-  @Mock VisitValidator visitValidator;
-  @Mock PasswordEncoder passwordEncoder;
 
   private VetService vetService;
   private Clinic clinic;
 
   @BeforeEach
   void setUp() {
-    vetService =
-        new VetService(
-            vetRepository,
-            clinicRepository,
-            userRepository,
-            ownerRepository,
-            animalRepository,
-            visitRepository,
-            visitValidator,
-            passwordEncoder);
+    vetService = new VetService(vetRepository, clinicRepository, userRepository);
     clinic = Clinic.builder().id(1L).clinicName("PokiePaws Legnica").build();
   }
 

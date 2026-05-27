@@ -1,6 +1,6 @@
 package com.pokiepaws.api.controllers;
 
-import com.pokiepaws.api.dto.vet.VetMeResponse;
+import com.pokiepaws.api.dto.vet.VetListResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.dto.vet.VetResponse;
 import com.pokiepaws.api.models.Vet;
@@ -19,12 +19,6 @@ public class VetController {
 
   private final VetService vetService;
 
-  @GetMapping("/me")
-  @PreAuthorize("hasRole('VET')")
-  public VetMeResponse getMe(Authentication authentication) {
-    return vetService.getMe(authentication.getName());
-  }
-
   @GetMapping
   public List<Vet> getAll() {
     return vetService.getAll();
@@ -42,8 +36,8 @@ public class VetController {
   }
 
   @GetMapping("/clinic/{clinicId}")
-  public List<Vet> getByClinic(@PathVariable Long clinicId) {
-    return vetService.getByClinic(clinicId);
+  public List<VetListResponse> getByClinic(@PathVariable Long clinicId) {
+    return vetService.getListItemsByClinic(clinicId);
   }
 
   @PostMapping

@@ -49,6 +49,9 @@ public class LabOrder {
   @Builder.Default
   private LabOrderStatus status = LabOrderStatus.PENDING;
 
+  @Column(name = "warehouse_order_id")
+  private Long warehouseOrderId;
+
   @Column(name = "ordered_at", nullable = false, updatable = false)
   private LocalDateTime orderedAt;
 

@@ -3,6 +3,7 @@ package com.pokiepaws.api.dto.laborder;
 import com.pokiepaws.api.models.LabOrderPriority;
 import com.pokiepaws.api.models.LabOrderStatus;
 import java.time.LocalDateTime;
+import java.util.List;
 import lombok.Builder;
 import lombok.Value;
 
@@ -22,6 +23,8 @@ public class LabOrderResponse {
   String clinicalReason;
   LabOrderPriority priority;
   LabOrderStatus status;
+  Long warehouseOrderId;
   LocalDateTime orderedAt;
   LocalDateTime completedAt;
+  List<LabOrderStatusHistoryResponse> statusHistory;
 }

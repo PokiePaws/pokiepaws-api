@@ -2,27 +2,50 @@ package com.pokiepaws.api.services;
 
 import com.pokiepaws.api.dto.laborder.CreateLabOrderRequest;
 import com.pokiepaws.api.dto.laborder.LabOrderResponse;
+import com.pokiepaws.api.dto.laborder.LabOrderStatusHistoryResponse;
 import com.pokiepaws.api.exceptions.ApiErrorMessage;
 import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.*;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 @Service
 @RequiredArgsConstructor
 public class LabOrderService {
 
+  /**
+   * Valid status transitions. Terminal statuses (COMPLETED, CANCELLED) have empty sets.
+   *
+   * <p>Flow: PENDING → CONFIRMED → IN_PROGRESS → COMPLETED / CANCELLED
+   */
+  private static final Map<LabOrderStatus, Set<LabOrderStatus>> ALLOWED_TRANSITIONS =
+      Map.of(
+          LabOrderStatus.PENDING, Set.of(LabOrderStatus.CONFIRMED, LabOrderStatus.CANCELLED),
+          LabOrderStatus.CONFIRMED, Set.of(LabOrderStatus.IN_PROGRESS, LabOrderStatus.CANCELLED),
+          LabOrderStatus.IN_PROGRESS, Set.of(LabOrderStatus.COMPLETED, LabOrderStatus.CANCELLED),
+          LabOrderStatus.COMPLETED, Set.of(),
+          LabOrderStatus.CANCELLED, Set.of());
+
   private final LabOrderRepository labOrderRepository;
+  private final LabOrderStatusHistoryRepository statusHistoryRepository;
   private final AnimalRepository animalRepository;
   private final VisitRepository visitRepository;
   private final VetRepository vetRepository;
   private final UserRepository userRepository;
+  private final RealtimeNotificationService realtimeNotificationService;
+  private final LabOrderWarehouseIntegrationService warehouseIntegrationService;
+
+  // ─── Create ────────────────────────────────────────────────────────────────────
 
   @Transactional
   public LabOrderResponse createForAnimal(Long animalId, CreateLabOrderRequest request) {
@@ -61,8 +84,27 @@ public class LabOrderService {
             .priority(request.getPriority())
             .build();
 
-    return toResponse(labOrderRepository.save(labOrder));
+    LabOrder saved = labOrderRepository.save(labOrder);
+
+    // Record initial status in history
+    statusHistoryRepository.save(
+        LabOrderStatusHistory.builder()
+            .labOrder(saved)
+            .previousStatus(null)
+            .newStatus(LabOrderStatus.PENDING)
+            .changedByEmail(currentUser.getEmail())
+            .build());
+
+    // Warehouse integration runs after commit — failure never rolls back the lab order
+    scheduleWarehouseOrderCreation(saved.getId(), clinic.getId(), saved.getTestType());
+
+    // Realtime notification (also runs after commit inside publishLabOrderCreated)
+    realtimeNotificationService.publishLabOrderCreated(saved);
+
+    return toResponse(saved);
   }
+
+  // ─── Read ──────────────────────────────────────────────────────────────────────
 
   @Transactional(readOnly = true)
   public LabOrderResponse getById(Long id) {
@@ -75,23 +117,25 @@ public class LabOrderService {
   @Transactional(readOnly = true)
   public List<LabOrderResponse> getByClinic(Long clinicId) {
     return labOrderRepository.findAllByClinicIdOrderByOrderedAtDesc(clinicId).stream()
-        .map(LabOrderService::toResponse)
+        .map(this::toResponse)
         .toList();
   }
 
   @Transactional(readOnly = true)
   public List<LabOrderResponse> getByVet(Long vetUserId) {
     return labOrderRepository.findAllByVetUserIdOrderByOrderedAtDesc(vetUserId).stream()
-        .map(LabOrderService::toResponse)
+        .map(this::toResponse)
         .toList();
   }
 
   @Transactional(readOnly = true)
   public List<LabOrderResponse> getByAnimal(Long animalId) {
     return labOrderRepository.findAllByAnimalIdOrderByOrderedAtDesc(animalId).stream()
-        .map(LabOrderService::toResponse)
+        .map(this::toResponse)
         .toList();
   }
+
+  // ─── Update status ─────────────────────────────────────────────────────────────
 
   @Transactional
   public LabOrderResponse updateStatus(Long id, LabOrderStatus newStatus) {
@@ -100,22 +144,79 @@ public class LabOrderService {
             .findById(id)
             .orElseThrow(() -> ApiException.notFound("Lab order not found"));
 
+    LabOrderStatus currentStatus = labOrder.getStatus();
+    Set<LabOrderStatus> allowed = ALLOWED_TRANSITIONS.getOrDefault(currentStatus, Set.of());
+
+    if (!allowed.contains(newStatus)) {
+      throw ApiException.badRequest(
+          "Invalid status transition from "
+              + currentStatus
+              + " to "
+              + newStatus
+              + ". Allowed transitions: "
+              + allowed);
+    }
+
+    String changedByEmail = getCurrentUser().getEmail();
+
+    // Record the transition in history
+    statusHistoryRepository.save(
+        LabOrderStatusHistory.builder()
+            .labOrder(labOrder)
+            .previousStatus(currentStatus)
+            .newStatus(newStatus)
+            .changedByEmail(changedByEmail)
+            .build());
+
     labOrder.setStatus(newStatus);
     if (newStatus == LabOrderStatus.COMPLETED || newStatus == LabOrderStatus.CANCELLED) {
       labOrder.setCompletedAt(LocalDateTime.now());
     }
 
-    return toResponse(labOrderRepository.save(labOrder));
+    LabOrder saved = labOrderRepository.save(labOrder);
+
+    // Realtime notification
+    realtimeNotificationService.publishLabOrderStatusUpdated(saved);
+
+    return toResponse(saved);
+  }
+
+  // ─── Internal helpers ──────────────────────────────────────────────────────────
+
+  /**
+   * Schedules warehouse order creation to run after the current transaction commits. If no
+   * transaction is active (e.g. in tests), runs immediately.
+   */
+  private void scheduleWarehouseOrderCreation(Long labOrderId, Long clinicId, String testType) {
+    if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+      warehouseIntegrationService.createWarehouseOrder(labOrderId, clinicId, testType);
+      return;
+    }
+    TransactionSynchronizationManager.registerSynchronization(
+        new TransactionSynchronization() {
+          @Override
+          public void afterCommit() {
+            warehouseIntegrationService.createWarehouseOrder(labOrderId, clinicId, testType);
+          }
+        });
   }
 
   private User getCurrentUser() {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    if (auth == null || auth.getName() == null) {
+      throw ApiException.unauthorized(ApiErrorMessage.USER_NOT_FOUND);
+    }
     return userRepository
         .findByEmail(auth.getName())
         .orElseThrow(() -> ApiException.unauthorized(ApiErrorMessage.USER_NOT_FOUND));
   }
 
-  private static LabOrderResponse toResponse(LabOrder o) {
+  private LabOrderResponse toResponse(LabOrder o) {
+    List<LabOrderStatusHistoryResponse> history =
+        statusHistoryRepository.findAllByLabOrderIdOrderByChangedAtAsc(o.getId()).stream()
+            .map(LabOrderService::toHistoryResponse)
+            .toList();
+
     return LabOrderResponse.builder()
         .id(o.getId())
         .animalId(o.getAnimal().getId())
@@ -130,8 +231,20 @@ public class LabOrderService {
         .clinicalReason(o.getClinicalReason())
         .priority(o.getPriority())
         .status(o.getStatus())
+        .warehouseOrderId(o.getWarehouseOrderId())
         .orderedAt(o.getOrderedAt())
         .completedAt(o.getCompletedAt())
+        .statusHistory(history)
+        .build();
+  }
+
+  private static LabOrderStatusHistoryResponse toHistoryResponse(LabOrderStatusHistory h) {
+    return LabOrderStatusHistoryResponse.builder()
+        .id(h.getId())
+        .previousStatus(h.getPreviousStatus())
+        .newStatus(h.getNewStatus())
+        .changedByEmail(h.getChangedByEmail())
+        .changedAt(h.getChangedAt())
         .build();
   }
 }

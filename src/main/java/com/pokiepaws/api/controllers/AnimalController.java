@@ -46,12 +46,6 @@ public class AnimalController {
     return ResponseEntity.ok(animalService.getAnimalsByOwner(ownerId));
   }
 
-  @GetMapping("/clinic/{clinicId}")
-  @PreAuthorize("hasAnyRole('VET', 'ADMIN')")
-  public ResponseEntity<List<AnimalResponse>> getAnimalsByClinic(@PathVariable Long clinicId) {
-    return ResponseEntity.ok(animalService.getAnimalsByClinic(clinicId));
-  }
-
   @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE)
   @PreAuthorize("hasRole('OWNER')")
   public ResponseEntity<AnimalResponse> addAnimal(@Valid @RequestBody AnimalRequest request) {
