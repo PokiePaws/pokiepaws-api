@@ -18,7 +18,7 @@ public class ClinicAssortmentController {
   private final ClinicAssortmentService service;
 
   @GetMapping
-  @PreAuthorize("hasRole('WAREHOUSE')")
+  @PreAuthorize("hasAnyRole('WAREHOUSE', 'ADMIN', 'VET')")
   public List<ClinicAssortmentItemResponse> getAll(
       @RequestParam(required = false) Long clinicId,
       @RequestParam(required = false) String status) {
@@ -33,7 +33,7 @@ public class ClinicAssortmentController {
   }
 
   @PutMapping("/{id}/status")
-  @PreAuthorize("hasRole('WAREHOUSE')")
+  @PreAuthorize("hasAnyRole('WAREHOUSE', 'ADMIN')")
   public ClinicAssortmentItemResponse updateStatus(
       @PathVariable Long id, @Valid @RequestBody UpdateStatusRequest request) {
     return service.updateStatus(id, request.getStatus());

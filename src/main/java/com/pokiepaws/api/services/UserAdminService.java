@@ -7,10 +7,13 @@ import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.models.Role;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.models.Vet;
+import com.pokiepaws.api.models.Warehouse;
+import com.pokiepaws.api.models.WarehouseWorker;
 import com.pokiepaws.api.repositories.ClinicRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VetRepository;
+import com.pokiepaws.api.repositories.WarehouseRepository;
 import com.pokiepaws.api.repositories.WarehouseWorkerRepository;
 import java.util.List;
 import java.util.Locale;
@@ -32,12 +35,15 @@ public class UserAdminService {
   private static final String VET_REQUIRES_CLINIC = "Vet requires clinic";
   private static final String VET_REQUIRES_NPWZ = "Vet requires NPWZ";
   private static final String NPWZ_ALREADY_IN_USE = "NPWZ already in use";
+  private static final String WAREHOUSE_WORKER_REQUIRES_WAREHOUSE =
+      "Warehouse worker requires warehouse";
 
   private final UserRepository userRepository;
   private final OwnerRepository ownerRepository;
   private final VetRepository vetRepository;
   private final ClinicRepository clinicRepository;
   private final WarehouseWorkerRepository warehouseWorkerRepository;
+  private final WarehouseRepository warehouseRepository;
   private final PasswordEncoder passwordEncoder;
 
   @Transactional(readOnly = true)
@@ -146,6 +152,8 @@ public class UserAdminService {
       syncVetProfile(user, request);
     } else if (role == Role.OWNER) {
       syncOwnerProfile(user, request);
+    } else if (role == Role.WAREHOUSE) {
+      syncWarehouseWorkerProfile(user, request);
     }
   }
 
@@ -181,6 +189,29 @@ public class UserAdminService {
     vet.setClinic(clinic);
     vet.setActive(request.isActive());
     vetRepository.save(vet);
+  }
+
+  private void syncWarehouseWorkerProfile(User user, UserAdminRequest request) {
+    if (request.getWarehouseId() == null) {
+      throw new ResponseStatusException(
+          HttpStatus.BAD_REQUEST, WAREHOUSE_WORKER_REQUIRES_WAREHOUSE);
+    }
+    Warehouse warehouse =
+        warehouseRepository
+            .findById(request.getWarehouseId())
+            .orElseThrow(
+                () -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Warehouse not found"));
+
+    WarehouseWorker worker =
+        warehouseWorkerRepository
+            .findByUserId(user.getId())
+            .orElseGet(() -> WarehouseWorker.builder().user(user).build());
+    worker.setFirstName(request.getFirstName());
+    worker.setLastName(request.getLastName());
+    worker.setPhoneNumber(defaultIfBlank(request.getPhone(), ""));
+    worker.setWarehouse(warehouse);
+    worker.setActive(request.isActive());
+    warehouseWorkerRepository.save(worker);
   }
 
   private void syncOwnerProfile(User user, UserAdminRequest request) {
@@ -235,7 +266,13 @@ public class UserAdminService {
                 response
                     .firstName(worker.getFirstName())
                     .lastName(worker.getLastName())
-                    .phone(worker.getPhoneNumber()));
+                    .phone(worker.getPhoneNumber())
+                    .warehouseId(
+                        worker.getWarehouse() != null ? worker.getWarehouse().getId() : null)
+                    .warehouseName(
+                        worker.getWarehouse() != null
+                            ? worker.getWarehouse().getWarehouseName()
+                            : null));
 
     return response.build();
   }
