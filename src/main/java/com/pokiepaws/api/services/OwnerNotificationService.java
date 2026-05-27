@@ -30,6 +30,14 @@ public class OwnerNotificationService {
         });
   }
 
+  public void visitCancelledByVet(Visit visit) {
+    sendAfterCommit(
+        () -> {
+          mobilePushNotificationService.sendVisitCancelledByVet(visit);
+          ownerEmailNotificationService.sendVisitCancelledByVet(visit);
+        });
+  }
+
   public void visitReminder(Visit visit, String reminderType) {
     sendAfterCommit(
         () -> {

@@ -8,6 +8,7 @@ import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.models.VisitStatus;
 import com.pokiepaws.api.repositories.VetRepository;
+import com.pokiepaws.api.repositories.VetWorkingHoursRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class AvailabilityService {
   private final VetRepository vetRepository;
   private final VisitRepository visitRepository;
   private final VisitScheduleProperties visitScheduleProperties;
+  private final VetWorkingHoursRepository vetWorkingHoursRepository;
 
   @Transactional(readOnly = true)
   public AvailableSlotsResponse getAvailableSlots(Long clinicId, Long vetUserId, LocalDate date) {
@@ -40,8 +42,32 @@ public class AvailabilityService {
     int slotMinutes = visitScheduleProperties.getSlotMinutes();
 
     LocalDateTime dayStart = date.atTime(visitScheduleProperties.getWorkStart());
-
     LocalDateTime dayEnd = date.atTime(visitScheduleProperties.getWorkEnd());
+    LocalDateTime breakStart = null;
+    LocalDateTime breakEnd = null;
+
+    var workingHours =
+        vetWorkingHoursRepository.findByVetUserIdAndDayOfWeek(vetUserId, date.getDayOfWeek());
+    if (workingHours.isPresent()) {
+      var hours = workingHours.get();
+      if (!hours.isActive()) {
+        return AvailableSlotsResponse.builder()
+            .clinicId(clinicId)
+            .vetUserId(vetUserId)
+            .date(date)
+            .slotMinutes(slotMinutes)
+            .workdayStart(dayStart)
+            .workdayEnd(dayEnd)
+            .availableStarts(List.of())
+            .build();
+      }
+      dayStart = date.atTime(hours.getStartTime());
+      dayEnd = date.atTime(hours.getEndTime());
+      if (hours.getBreakStart() != null && hours.getBreakEnd() != null) {
+        breakStart = date.atTime(hours.getBreakStart());
+        breakEnd = date.atTime(hours.getBreakEnd());
+      }
+    }
 
     List<Visit> visits =
         visitRepository.findAllByVetUserIdAndStartsAtBetween(vetUserId, dayStart, dayEnd);
@@ -54,7 +80,13 @@ public class AvailabilityService {
 
       LocalDateTime slotEnd = slotStart.plusMinutes(slotMinutes);
 
-      if (!hasOverlappingVisit(visits, slotStart, slotEnd)) {
+      boolean overlapsBreak =
+          breakStart != null
+              && breakEnd != null
+              && slotStart.isBefore(breakEnd)
+              && slotEnd.isAfter(breakStart);
+
+      if (!overlapsBreak && !hasOverlappingVisit(visits, slotStart, slotEnd)) {
         available.add(slotStart);
       }
     }
