@@ -78,8 +78,6 @@ class LabOrderServiceTest {
     SecurityContextHolder.clearContext();
   }
 
-  // ─── createForAnimal ──────────────────────────────────────────────────────────
-
   @Nested
   class CreateForAnimal {
 
@@ -172,8 +170,6 @@ class LabOrderServiceTest {
       verify(labOrderRepository, never()).save(any());
     }
   }
-
-  // ─── updateStatus ─────────────────────────────────────────────────────────────
 
   @Nested
   class UpdateStatus {
@@ -293,8 +289,6 @@ class LabOrderServiceTest {
     }
   }
 
-  // ─── getByClinic / getByAnimal ────────────────────────────────────────────────
-
   @Nested
   class Queries {
 
@@ -335,8 +329,6 @@ class LabOrderServiceTest {
     }
   }
 
-  // ─── Helpers ──────────────────────────────────────────────────────────────────
-
   private void authenticate() {
     SecurityContextHolder.getContext()
         .setAuthentication(new UsernamePasswordAuthenticationToken(VET_EMAIL, "secret", List.of()));
@@ -361,7 +353,6 @@ class LabOrderServiceTest {
         .build();
   }
 
-  /** Stubs the common mocks needed for a successful status update. */
   private void stubForStatusUpdate(LabOrder lo) {
     when(labOrderRepository.findById(lo.getId())).thenReturn(Optional.of(lo));
     when(userRepository.findByEmail(VET_EMAIL)).thenReturn(Optional.of(vetUser));

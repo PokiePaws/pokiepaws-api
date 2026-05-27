@@ -10,7 +10,6 @@ import lombok.Data;
 @Data
 public class RegisterPatientRequest {
 
-  // owner info
   @NotBlank @Email private String ownerEmail;
 
   @NotBlank private String ownerFirstName;
@@ -19,7 +18,6 @@ public class RegisterPatientRequest {
 
   private String ownerPhone;
 
-  // animal info
   @NotBlank private String animalName;
 
   @NotBlank private String animalSpecies;
