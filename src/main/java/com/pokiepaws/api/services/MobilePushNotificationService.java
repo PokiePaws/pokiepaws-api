@@ -44,6 +44,16 @@ public class MobilePushNotificationService {
         "VISIT_CANCELLED");
   }
 
+  public void sendVisitCancelledByVet(Visit visit) {
+    sendVisitNotificationAfterCommit(
+        visit,
+        "Wizyta odwolana przez weterynarza",
+        "Weterynarz odwolal Twoja wizyte w dniu "
+            + formatVisitTime(visit)
+            + ". Prosimy o umowienie wizyty w innym terminie.",
+        "VISIT_CANCELLED_BY_VET");
+  }
+
   public void sendVisitReminder(Visit visit, String reminderType) {
     sendVisitNotificationAfterCommit(
         visit,

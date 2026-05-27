@@ -2,6 +2,7 @@ package com.pokiepaws.api.controllers;
 
 import com.pokiepaws.api.dto.vet.VetMeResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
+import com.pokiepaws.api.dto.vet.VetResponse;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
 import jakarta.validation.Valid;
@@ -32,6 +33,12 @@ public class VetController {
   @GetMapping("/{id}")
   public Vet getById(@PathVariable Long id) {
     return vetService.getById(id);
+  }
+
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('VET')")
+  public VetResponse getMe(Authentication authentication) {
+    return vetService.getCurrentVet(authentication.getName());
   }
 
   @GetMapping("/clinic/{clinicId}")

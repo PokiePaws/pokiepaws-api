@@ -13,6 +13,7 @@ import com.pokiepaws.api.repositories.PrescriptionRepository;
 import com.pokiepaws.api.repositories.ProductRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
+import com.pokiepaws.api.repositories.WarehouseStockItemRepository;
 import com.pokiepaws.api.services.OwnerNotificationService;
 import com.pokiepaws.api.services.PrescriptionService;
 import com.pokiepaws.api.services.RealtimeNotificationService;
@@ -43,13 +44,13 @@ class PrescriptionServiceTest {
   @Mock VisitRepository visitRepository;
   @Mock PrescriptionRepository prescriptionRepository;
   @Mock ProductRepository productRepository;
+  @Mock WarehouseStockItemRepository warehouseStockItemRepository;
   @Mock ClinicStockItemRepository clinicStockItemRepository;
   @Mock UserRepository userRepository;
   @Mock RealtimeNotificationService realtimeNotificationService;
   @Mock OwnerNotificationService ownerNotificationService;
 
   private PrescriptionService prescriptionService;
-  private PrescriptionValidator prescriptionValidator;
   private Clinic clinic;
   private Vet vet;
   private Visit visit;
@@ -59,13 +60,14 @@ class PrescriptionServiceTest {
   @BeforeEach
   void setUp() {
     Clock clock = Clock.fixed(Instant.parse("2026-05-10T10:00:00Z"), ZoneId.of("UTC"));
-    prescriptionValidator = new PrescriptionValidator(prescriptionRepository);
+    PrescriptionValidator prescriptionValidator = new PrescriptionValidator(prescriptionRepository);
     prescriptionService =
         new PrescriptionService(
             clock,
             visitRepository,
             prescriptionRepository,
             productRepository,
+            warehouseStockItemRepository,
             clinicStockItemRepository,
             userRepository,
             realtimeNotificationService,

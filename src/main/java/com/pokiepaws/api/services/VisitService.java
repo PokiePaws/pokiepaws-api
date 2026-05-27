@@ -188,6 +188,27 @@ public class VisitService {
     return toResponse(visit);
   }
 
+  @Transactional
+  public VisitResponse cancelForCurrentVet(Long visitId) {
+    Long vetUserId = getCurrentUserIdOrThrow();
+
+    Visit visit =
+        visitRepository
+            .findById(visitId)
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
+
+    visitValidator.validateCurrentVetAssignedToVisit(visit, vetUserId);
+    visitValidator.validateVisitCanBeCancelledByVet(visit);
+
+    visit.setStatus(VisitStatus.CANCELLED);
+    Visit saved = visitRepository.save(visit);
+
+    realtimeNotificationService.publishVisitCancelled(saved);
+    ownerNotificationService.visitCancelledByVet(saved);
+
+    return toResponse(saved);
+  }
+
   @Transactional(readOnly = true)
   public List<VisitResponse> getMyUpcomingVisitsForCurrentVet() {
     Long vetUserId = getCurrentUserIdOrThrow();

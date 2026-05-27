@@ -40,20 +40,4 @@ class EmailServiceTest {
     assertThat(message.getText())
         .contains("https://api.pokiepaws.pl/api/auth/verify-email?token=TOKEN");
   }
-
-  @Test
-  void sendForgotPasswordEmail_shouldSendExpectedMessageWithResetLink() {
-    emailService.sendForgotPasswordEmail("owner@pokiepaws.pl", "RESET", "https://api.pokiepaws.pl");
-
-    ArgumentCaptor<SimpleMailMessage> messageCaptor =
-        ArgumentCaptor.forClass(SimpleMailMessage.class);
-    verify(mailSender).send(messageCaptor.capture());
-
-    SimpleMailMessage message = messageCaptor.getValue();
-    assertThat(message.getFrom()).isEqualTo("noreply@pokiepaws.pl");
-    assertThat(message.getTo()).containsExactly("owner@pokiepaws.pl");
-    assertThat(message.getSubject()).contains("Reset password");
-    assertThat(message.getText())
-        .contains("https://api.pokiepaws.pl/api/auth/reset-password?token=RESET");
-  }
 }

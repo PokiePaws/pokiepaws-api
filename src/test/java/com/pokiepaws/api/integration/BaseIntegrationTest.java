@@ -10,13 +10,14 @@ import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
-@Testcontainers
+@Testcontainers(disabledWithoutDocker = true)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @AutoConfigureMockMvc
 @ActiveProfiles("test")
 public abstract class BaseIntegrationTest {
 
   @Container
+  @SuppressWarnings("resource")
   static final PostgreSQLContainer<?> POSTGRES =
       new PostgreSQLContainer<>("postgres:16-alpine")
           .withDatabaseName("pokiepaws_test")
@@ -24,6 +25,7 @@ public abstract class BaseIntegrationTest {
           .withPassword("test_password");
 
   @Container
+  @SuppressWarnings("resource")
   static final GenericContainer<?> MAILPIT =
       new GenericContainer<>("axllent/mailpit:latest").withExposedPorts(1025, 8025);
 

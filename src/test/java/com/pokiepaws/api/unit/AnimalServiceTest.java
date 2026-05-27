@@ -13,6 +13,7 @@ import com.pokiepaws.api.models.Owner;
 import com.pokiepaws.api.models.User;
 import com.pokiepaws.api.repositories.AnimalRepository;
 import com.pokiepaws.api.repositories.OwnerRepository;
+import com.pokiepaws.api.repositories.VetRepository;
 import com.pokiepaws.api.services.AnimalService;
 import java.time.LocalDate;
 import java.util.List;
@@ -34,6 +35,7 @@ class AnimalServiceTest {
 
   @Mock AnimalRepository animalRepository;
   @Mock OwnerRepository ownerRepository;
+  @Mock VetRepository vetRepository;
 
   private AnimalService animalService;
   private Owner owner;
@@ -41,7 +43,7 @@ class AnimalServiceTest {
 
   @BeforeEach
   void setUp() {
-    animalService = new AnimalService(animalRepository, ownerRepository);
+    animalService = new AnimalService(animalRepository, ownerRepository, vetRepository);
     owner =
         Owner.builder()
             .userId(10L)

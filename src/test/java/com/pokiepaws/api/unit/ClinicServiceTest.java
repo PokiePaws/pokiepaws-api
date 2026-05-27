@@ -50,7 +50,7 @@ class ClinicServiceTest {
 
   @Test
   void getVetsByClinicId_shouldMapVetsForExistingClinic() {
-    Clinic clinic = clinic(1L, "PokiePaws Legnica", "Legnica", true);
+    Clinic clinic = clinic(1L, "PokiePaws Legnica", "Legnica");
     Vet vet =
         Vet.builder()
             .userId(5L)
@@ -78,7 +78,7 @@ class ClinicServiceTest {
   void getAvailableSlots_shouldExcludeTakenSlotsAndCancelledVisits() {
     LocalDate date = LocalDate.now().plusDays(1);
 
-    Clinic clinic = clinic(1L, "PokiePaws Legnica", "Legnica", true);
+    Clinic clinic = clinic(1L, "PokiePaws Legnica", "Legnica");
     Vet vet = Vet.builder().userId(5L).clinic(clinic).build();
 
     Visit scheduled =
@@ -109,8 +109,8 @@ class ClinicServiceTest {
 
   @Test
   void getAvailableSlots_shouldThrow400_whenVetBelongsToDifferentClinic() {
-    Clinic requestedClinic = clinic(1L, "PokiePaws Legnica", "Legnica", true);
-    Vet vet = Vet.builder().userId(5L).clinic(clinic(2L, "Other", "Wroclaw", true)).build();
+    Clinic requestedClinic = clinic(1L, "PokiePaws Legnica", "Legnica");
+    Vet vet = Vet.builder().userId(5L).clinic(clinic(2L, "Other", "Wroclaw")).build();
 
     when(clinicQueryService.getByIdAsDto(1L)).thenReturn(requestedClinic);
     when(vetRepository.findById(5L)).thenReturn(Optional.of(vet));
@@ -135,7 +135,7 @@ class ClinicServiceTest {
     verify(clinicRepository).deleteById(7L);
   }
 
-  private Clinic clinic(Long id, String name, String city, boolean active) {
+  private Clinic clinic(Long id, String name, String city) {
     return Clinic.builder()
         .id(id)
         .clinicName(name)
@@ -148,7 +148,7 @@ class ClinicServiceTest {
         .phone("+48123123123")
         .email("clinic@pokiepaws.pl")
         .workingHours("09:00-17:00")
-        .active(active)
+        .active(true)
         .build();
   }
 }

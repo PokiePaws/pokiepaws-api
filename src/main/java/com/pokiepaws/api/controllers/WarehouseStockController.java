@@ -17,26 +17,26 @@ public class WarehouseStockController {
   private final WarehouseStockService service;
 
   @GetMapping
-  @PreAuthorize("hasRole('WAREHOUSE')")
+  @PreAuthorize("hasAnyRole('WAREHOUSE','VET')")
   public List<WarehouseStockItemResponse> getAll() {
     return service.getAll();
   }
 
   @GetMapping("/warehouse/{warehouseId}")
-  @PreAuthorize("hasRole('WAREHOUSE')")
+  @PreAuthorize("hasAnyRole('WAREHOUSE','VET')")
   public List<WarehouseStockItemResponse> getByWarehouse(@PathVariable Long warehouseId) {
     return service.getByWarehouse(warehouseId);
   }
 
   @GetMapping("/low-stock")
-  @PreAuthorize("hasRole('WAREHOUSE')")
+  @PreAuthorize("hasAnyRole('WAREHOUSE','VET')")
   public List<WarehouseStockItemResponse> getLowStock(
       @RequestParam(defaultValue = "10") int threshold) {
     return service.getLowStock(threshold);
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasRole('WAREHOUSE')")
+  @PreAuthorize("hasAnyRole('WAREHOUSE','VET')")
   public WarehouseStockItemResponse getById(@PathVariable Long id) {
     return service.getById(id);
   }
