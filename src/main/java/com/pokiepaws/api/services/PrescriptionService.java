@@ -25,7 +25,6 @@ public class PrescriptionService {
   private final VisitRepository visitRepository;
   private final PrescriptionRepository prescriptionRepository;
   private final ProductRepository productRepository;
-  private final WarehouseStockItemRepository warehouseStockItemRepository;
   private final ClinicStockItemRepository clinicStockItemRepository;
   private final UserRepository userRepository;
   private final RealtimeNotificationService realtimeNotificationService;
@@ -65,7 +64,13 @@ public class PrescriptionService {
         .getItems()
         .forEach(
             i -> {
-              Product product = resolveProduct(i.getProductId());
+              Product product =
+                  productRepository
+                      .findById(i.getProductId())
+                      .orElseThrow(
+                          () ->
+                              ApiException.notFound(
+                                  ApiErrorMessage.PRODUCT_NOT_FOUND + i.getProductId()));
 
               ClinicStockItem stock =
                   clinicStockItemRepository
@@ -96,20 +101,6 @@ public class PrescriptionService {
     realtimeNotificationService.publishPrescriptionCreated(saved);
     ownerNotificationService.prescriptionCreated(saved);
     return toResponse(saved);
-  }
-
-  private Product resolveProduct(Long productOrWarehouseStockItemId) {
-    return productRepository
-        .findById(productOrWarehouseStockItemId)
-        .or(
-            () ->
-                warehouseStockItemRepository
-                    .findById(productOrWarehouseStockItemId)
-                    .flatMap(stock -> productRepository.findByName(stock.getName())))
-        .orElseThrow(
-            () ->
-                ApiException.notFound(
-                    ApiErrorMessage.PRODUCT_NOT_FOUND + productOrWarehouseStockItemId));
   }
 
   @Transactional(readOnly = true)

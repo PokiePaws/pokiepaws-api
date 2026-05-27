@@ -40,9 +40,4 @@ public class VetVisitsController {
   public VisitResponse confirm(@PathVariable Long id) {
     return visitService.confirmForCurrentVet(id);
   }
-
-  @PatchMapping("/{id}/cancel")
-  public VisitResponse cancel(@PathVariable Long id) {
-    return visitService.cancelForCurrentVet(id);
-  }
 }

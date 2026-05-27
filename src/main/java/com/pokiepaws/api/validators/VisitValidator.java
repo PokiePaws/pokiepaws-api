@@ -4,7 +4,6 @@ import com.pokiepaws.api.config.properties.VisitScheduleProperties;
 import com.pokiepaws.api.exceptions.ApiErrorMessage;
 import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.*;
-import com.pokiepaws.api.repositories.VetWorkingHoursRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -18,17 +17,13 @@ public class VisitValidator {
   private final LocalTime workStart;
   private final LocalTime workEnd;
   private final VisitRepository visitRepository;
-  private final VetWorkingHoursRepository vetWorkingHoursRepository;
 
   public VisitValidator(
-      VisitScheduleProperties visitScheduleProperties,
-      VisitRepository visitRepository,
-      VetWorkingHoursRepository vetWorkingHoursRepository) {
+      VisitScheduleProperties visitScheduleProperties, VisitRepository visitRepository) {
     this.slotMinutes = visitScheduleProperties.getSlotMinutes();
     this.workStart = visitScheduleProperties.getWorkStart();
     this.workEnd = visitScheduleProperties.getWorkEnd();
     this.visitRepository = visitRepository;
-    this.vetWorkingHoursRepository = vetWorkingHoursRepository;
   }
 
   public void validateVetBelongsToClinic(Vet vet, Clinic clinic) {
@@ -43,38 +38,11 @@ public class VisitValidator {
     }
 
     LocalDateTime end = start.plusMinutes(slotMinutes);
-    LocalTime effectiveWorkStart = workStart;
-    LocalTime effectiveWorkEnd = workEnd;
-    LocalTime breakStart = null;
-    LocalTime breakEnd = null;
-
-    var workingHours =
-        vetWorkingHoursRepository.findByVetUserIdAndDayOfWeek(
-            vet.getUserId(), start.getDayOfWeek());
-    if (workingHours.isPresent()) {
-      var hours = workingHours.get();
-      if (!hours.isActive()) {
-        throw ApiException.badRequest(ApiErrorMessage.SELECTED_TIME_OUTSIDE_WORKING_HOURS);
-      }
-      effectiveWorkStart = hours.getStartTime();
-      effectiveWorkEnd = hours.getEndTime();
-      breakStart = hours.getBreakStart();
-      breakEnd = hours.getBreakEnd();
-    }
-
-    LocalDateTime dayStart = start.toLocalDate().atTime(effectiveWorkStart);
-    LocalDateTime dayEnd = start.toLocalDate().atTime(effectiveWorkEnd);
+    LocalDateTime dayStart = start.toLocalDate().atTime(workStart);
+    LocalDateTime dayEnd = start.toLocalDate().atTime(workEnd);
 
     if (start.isBefore(dayStart) || end.isAfter(dayEnd)) {
       throw ApiException.badRequest(ApiErrorMessage.SELECTED_TIME_OUTSIDE_WORKING_HOURS);
-    }
-
-    if (breakStart != null && breakEnd != null) {
-      LocalDateTime pauseStart = start.toLocalDate().atTime(breakStart);
-      LocalDateTime pauseEnd = start.toLocalDate().atTime(breakEnd);
-      if (start.isBefore(pauseEnd) && end.isAfter(pauseStart)) {
-        throw ApiException.badRequest(ApiErrorMessage.SELECTED_TIME_OUTSIDE_WORKING_HOURS);
-      }
     }
 
     if (!visitRepository.findOverlappingVisits(vet.getUserId(), start, end).isEmpty()) {
@@ -123,12 +91,6 @@ public class VisitValidator {
   public void validateMedicalDataCanBeUpdated(Visit visit) {
     if (visit.getStatus() == VisitStatus.CANCELLED) {
       throw ApiException.badRequest(ApiErrorMessage.CANCELLED_VISIT_UPDATE_FORBIDDEN);
-    }
-  }
-
-  public void validateVisitCanBeCancelledByVet(Visit visit) {
-    if (visit.getStatus() == VisitStatus.CANCELLED) {
-      throw ApiException.badRequest(ApiErrorMessage.CANCELLED_VISIT_CANCEL_FORBIDDEN);
     }
   }
 

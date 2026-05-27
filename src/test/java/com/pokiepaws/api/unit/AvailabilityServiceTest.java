@@ -10,7 +10,6 @@ import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.models.VisitStatus;
 import com.pokiepaws.api.repositories.VetRepository;
-import com.pokiepaws.api.repositories.VetWorkingHoursRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
 import com.pokiepaws.api.services.AvailabilityService;
 import java.time.LocalDate;
@@ -31,18 +30,13 @@ class AvailabilityServiceTest {
 
   @Mock VetRepository vetRepository;
   @Mock VisitRepository visitRepository;
-  @Mock VetWorkingHoursRepository vetWorkingHoursRepository;
 
   private AvailabilityService availabilityService;
 
   @BeforeEach
   void setUp() {
     availabilityService =
-        new AvailabilityService(
-            vetRepository,
-            visitRepository,
-            new VisitScheduleProperties(),
-            vetWorkingHoursRepository);
+        new AvailabilityService(vetRepository, visitRepository, new VisitScheduleProperties());
   }
 
   @Test
