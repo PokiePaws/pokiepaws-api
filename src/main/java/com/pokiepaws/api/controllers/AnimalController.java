@@ -28,14 +28,8 @@ public class AnimalController {
     return ResponseEntity.ok(animalService.getMyAnimals());
   }
 
-  @GetMapping("/clinic/{clinicId}")
-  @PreAuthorize("hasAnyRole('VET','ADMIN')")
-  public ResponseEntity<List<AnimalResponse>> getPatientsByClinic(@PathVariable Long clinicId) {
-    return ResponseEntity.ok(animalService.getPatientsByClinic(clinicId));
-  }
-
   @GetMapping("/{id}")
-  @PreAuthorize("hasAnyRole('OWNER','VET','ADMIN')")
+  @PreAuthorize("hasRole('OWNER')")
   public ResponseEntity<AnimalResponse> getAnimal(@PathVariable Long id) {
     return ResponseEntity.ok(animalService.getAnimal(id));
   }

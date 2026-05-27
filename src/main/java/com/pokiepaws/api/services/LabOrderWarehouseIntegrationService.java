@@ -11,11 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * Handles creation of a warehouse/assortment order that corresponds to a lab order. Runs in a
- * dedicated transaction (REQUIRES_NEW) so that warehouse integration failures never roll back the
- * primary lab order transaction.
- */
 @Service
 @RequiredArgsConstructor
 @Slf4j

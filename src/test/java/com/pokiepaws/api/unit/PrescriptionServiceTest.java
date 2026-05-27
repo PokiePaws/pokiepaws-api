@@ -13,7 +13,6 @@ import com.pokiepaws.api.repositories.PrescriptionRepository;
 import com.pokiepaws.api.repositories.ProductRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
-import com.pokiepaws.api.repositories.WarehouseStockItemRepository;
 import com.pokiepaws.api.services.OwnerNotificationService;
 import com.pokiepaws.api.services.PrescriptionService;
 import com.pokiepaws.api.services.RealtimeNotificationService;
@@ -44,7 +43,6 @@ class PrescriptionServiceTest {
   @Mock VisitRepository visitRepository;
   @Mock PrescriptionRepository prescriptionRepository;
   @Mock ProductRepository productRepository;
-  @Mock WarehouseStockItemRepository warehouseStockItemRepository;
   @Mock ClinicStockItemRepository clinicStockItemRepository;
   @Mock UserRepository userRepository;
   @Mock RealtimeNotificationService realtimeNotificationService;
@@ -67,7 +65,6 @@ class PrescriptionServiceTest {
             visitRepository,
             prescriptionRepository,
             productRepository,
-            warehouseStockItemRepository,
             clinicStockItemRepository,
             userRepository,
             realtimeNotificationService,

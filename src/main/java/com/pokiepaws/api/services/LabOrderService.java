@@ -23,11 +23,6 @@ import org.springframework.transaction.support.TransactionSynchronizationManager
 @RequiredArgsConstructor
 public class LabOrderService {
 
-  /**
-   * Valid status transitions. Terminal statuses (COMPLETED, CANCELLED) have empty sets.
-   *
-   * <p>Flow: PENDING → CONFIRMED → IN_PROGRESS → COMPLETED / CANCELLED
-   */
   private static final Map<LabOrderStatus, Set<LabOrderStatus>> ALLOWED_TRANSITIONS =
       Map.of(
           LabOrderStatus.PENDING, Set.of(LabOrderStatus.CONFIRMED, LabOrderStatus.CANCELLED),
@@ -44,8 +39,6 @@ public class LabOrderService {
   private final UserRepository userRepository;
   private final RealtimeNotificationService realtimeNotificationService;
   private final LabOrderWarehouseIntegrationService warehouseIntegrationService;
-
-  // ─── Create ────────────────────────────────────────────────────────────────────
 
   @Transactional
   public LabOrderResponse createForAnimal(Long animalId, CreateLabOrderRequest request) {
@@ -86,7 +79,6 @@ public class LabOrderService {
 
     LabOrder saved = labOrderRepository.save(labOrder);
 
-    // Record initial status in history
     statusHistoryRepository.save(
         LabOrderStatusHistory.builder()
             .labOrder(saved)
@@ -95,16 +87,12 @@ public class LabOrderService {
             .changedByEmail(currentUser.getEmail())
             .build());
 
-    // Warehouse integration runs after commit — failure never rolls back the lab order
     scheduleWarehouseOrderCreation(saved.getId(), clinic.getId(), saved.getTestType());
 
-    // Realtime notification (also runs after commit inside publishLabOrderCreated)
     realtimeNotificationService.publishLabOrderCreated(saved);
 
     return toResponse(saved);
   }
-
-  // ─── Read ──────────────────────────────────────────────────────────────────────
 
   @Transactional(readOnly = true)
   public LabOrderResponse getById(Long id) {
@@ -122,20 +110,11 @@ public class LabOrderService {
   }
 
   @Transactional(readOnly = true)
-  public List<LabOrderResponse> getByVet(Long vetUserId) {
-    return labOrderRepository.findAllByVetUserIdOrderByOrderedAtDesc(vetUserId).stream()
-        .map(this::toResponse)
-        .toList();
-  }
-
-  @Transactional(readOnly = true)
   public List<LabOrderResponse> getByAnimal(Long animalId) {
     return labOrderRepository.findAllByAnimalIdOrderByOrderedAtDesc(animalId).stream()
         .map(this::toResponse)
         .toList();
   }
-
-  // ─── Update status ─────────────────────────────────────────────────────────────
 
   @Transactional
   public LabOrderResponse updateStatus(Long id, LabOrderStatus newStatus) {
@@ -159,7 +138,6 @@ public class LabOrderService {
 
     String changedByEmail = getCurrentUser().getEmail();
 
-    // Record the transition in history
     statusHistoryRepository.save(
         LabOrderStatusHistory.builder()
             .labOrder(labOrder)
@@ -175,18 +153,11 @@ public class LabOrderService {
 
     LabOrder saved = labOrderRepository.save(labOrder);
 
-    // Realtime notification
     realtimeNotificationService.publishLabOrderStatusUpdated(saved);
 
     return toResponse(saved);
   }
 
-  // ─── Internal helpers ──────────────────────────────────────────────────────────
-
-  /**
-   * Schedules warehouse order creation to run after the current transaction commits. If no
-   * transaction is active (e.g. in tests), runs immediately.
-   */
   private void scheduleWarehouseOrderCreation(Long labOrderId, Long clinicId, String testType) {
     if (!TransactionSynchronizationManager.isSynchronizationActive()) {
       warehouseIntegrationService.createWarehouseOrder(labOrderId, clinicId, testType);

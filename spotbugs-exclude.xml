@@ -19,11 +19,6 @@
     </Match>
 
     <Match>
-        <Package name="~com\.pokiepaws\.api\.validators(\..*)?" />
-        <Bug pattern="EI_EXPOSE_REP2" />
-    </Match>
-
-    <Match>
         <Package name="~com\.pokiepaws\.api\.config(\..*)?" />
         <Bug pattern="EI_EXPOSE_REP2" />
     </Match>
