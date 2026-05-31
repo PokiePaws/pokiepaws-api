@@ -147,6 +147,53 @@ public class VisitService {
   }
 
   @Transactional
+  public VisitResponse createForVet(CreateVisitRequest req) {
+    Long vetUserId = getCurrentUserIdOrThrow();
+
+    Animal animal =
+        animalRepository
+            .findById(req.getAnimalId())
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.ANIMAL_NOT_FOUND));
+
+    Clinic clinic =
+        clinicRepository
+            .findById(req.getClinicId())
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.CLINIC_NOT_FOUND));
+
+    Vet vet =
+        vetRepository
+            .findById(req.getVetUserId())
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VET_NOT_FOUND));
+
+    if (!vet.getUserId().equals(vetUserId)) {
+      throw ApiException.forbidden(ApiErrorMessage.ACCESS_DENIED);
+    }
+
+    visitValidator.validateVetBelongsToClinic(vet, clinic);
+    visitValidator.validateRequestedSlot(vet, req.getStartsAt());
+
+    LocalDateTime start = req.getStartsAt();
+    LocalDateTime end = start.plusMinutes(visitValidator.slotMinutes());
+
+    Visit visit =
+        Visit.builder()
+            .animal(animal)
+            .clinic(clinic)
+            .vet(vet)
+            .startsAt(start)
+            .endsAt(end)
+            .description(req.getDescription())
+            .status(VisitStatus.SCHEDULED)
+            .used(false)
+            .build();
+
+    Visit saved = visitRepository.save(visit);
+
+    realtimeNotificationService.publishVisitCreated(saved);
+    return toResponse(saved);
+  }
+
+  @Transactional
   public VisitResponse confirmForCurrentVet(Long visitId) {
     Long vetUserId = getCurrentUserIdOrThrow();
 
@@ -176,6 +223,28 @@ public class VisitService {
             .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
 
     visitValidator.validateCurrentOwnerCanCancelVisit(visit, owner);
+
+    if (visit.getStatus() != VisitStatus.CANCELLED) {
+      visit.setStatus(VisitStatus.CANCELLED);
+      visitRepository.save(visit);
+
+      realtimeNotificationService.publishVisitCancelled(visit);
+      ownerNotificationService.visitCancelled(visit);
+    }
+
+    return toResponse(visit);
+  }
+
+  @Transactional
+  public VisitResponse cancelForCurrentVet(Long visitId) {
+    Long vetUserId = getCurrentUserIdOrThrow();
+
+    Visit visit =
+        visitRepository
+            .findById(visitId)
+            .orElseThrow(() -> ApiException.notFound(ApiErrorMessage.VISIT_NOT_FOUND));
+
+    visitValidator.validateCurrentVetAssignedToVisit(visit, vetUserId);
 
     if (visit.getStatus() != VisitStatus.CANCELLED) {
       visit.setStatus(VisitStatus.CANCELLED);

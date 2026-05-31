@@ -3,6 +3,7 @@ package com.pokiepaws.api.exceptions;
 public final class ApiErrorMessage {
 
   public static final String ACCESS_DENIED = "Access denied";
+  public static final String ANIMAL_NOT_FOUND = "Animal not found";
   public static final String ANIMAL_NOT_OWNED = "You are not the owner of this animal";
   public static final String CANCEL_FORBIDDEN = "You cannot cancel this visit";
   public static final String CANCELLED_VISIT_CONFIRM_FORBIDDEN = "Cannot confirm cancelled visit";
