@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +21,19 @@ public class VetController {
   @GetMapping
   public List<Vet> getAll() {
     return vetService.getAll();
+  }
+
+  @GetMapping("/me")
+  public VetListResponse getMe(Authentication authentication) {
+    Vet vet = vetService.getByEmail(authentication.getName());
+
+    return VetListResponse.builder()
+        .userId(vet.getUserId())
+        .firstName(vet.getFirstName())
+        .lastName(vet.getLastName())
+        .npwz(vet.getNpwz())
+        .specialization(vet.getSpecialization())
+        .build();
   }
 
   @GetMapping("/{id}")

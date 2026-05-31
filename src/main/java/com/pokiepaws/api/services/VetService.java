@@ -34,6 +34,12 @@ public class VetService {
         .orElseThrow(() -> new EntityNotFoundException("Vet not found with id: " + id));
   }
 
+  public Vet getByEmail(String email) {
+    return vetRepository
+        .findByUserEmail(email)
+        .orElseThrow(() -> new EntityNotFoundException("Vet not found with email: " + email));
+  }
+
   public List<VetListResponse> getListItemsByClinic(Long clinicId) {
     return vetRepository.findAllByClinicId(clinicId).stream()
         .map(
