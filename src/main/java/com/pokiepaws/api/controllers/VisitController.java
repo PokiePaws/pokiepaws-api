@@ -32,22 +32,18 @@ public class VisitController {
   @PreAuthorize("hasAnyRole('OWNER', 'VET')")
   public VisitResponse create(@Valid @RequestBody CreateVisitRequest req) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    boolean isVet = auth.getAuthorities().stream()
-        .anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
-    return isVet
-        ? visitService.createForVet(req)
-        : visitService.create(req);
+    boolean isVet =
+        auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
+    return isVet ? visitService.createForVet(req) : visitService.create(req);
   }
 
   @PatchMapping("/visits/{id}/cancel")
   @PreAuthorize("hasAnyRole('OWNER', 'VET')")
   public VisitResponse cancel(@PathVariable Long id) {
     Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-    boolean isVet = auth.getAuthorities().stream()
-        .anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
-    return isVet
-        ? visitService.cancelForCurrentVet(id)
-        : visitService.cancelForCurrentOwner(id);
+    boolean isVet =
+        auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
+    return isVet ? visitService.cancelForCurrentVet(id) : visitService.cancelForCurrentOwner(id);
   }
 
   @GetMapping("/owners/me/visits/upcoming")
