@@ -10,6 +10,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -27,15 +29,21 @@ public class VisitController {
 
   @PostMapping("/visits")
   @ResponseStatus(HttpStatus.CREATED)
-  @PreAuthorize("hasRole('OWNER')")
+  @PreAuthorize("hasAnyRole('OWNER', 'VET')")
   public VisitResponse create(@Valid @RequestBody CreateVisitRequest req) {
-    return visitService.create(req);
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    boolean isVet =
+        auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
+    return isVet ? visitService.createForVet(req) : visitService.create(req);
   }
 
   @PatchMapping("/visits/{id}/cancel")
-  @PreAuthorize("hasRole('OWNER')")
+  @PreAuthorize("hasAnyRole('OWNER', 'VET')")
   public VisitResponse cancel(@PathVariable Long id) {
-    return visitService.cancelForCurrentOwner(id);
+    Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+    boolean isVet =
+        auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
+    return isVet ? visitService.cancelForCurrentVet(id) : visitService.cancelForCurrentOwner(id);
   }
 
   @GetMapping("/owners/me/visits/upcoming")
