@@ -24,8 +24,16 @@ public class VetController {
   }
 
   @GetMapping("/me")
-  public Vet getMe(Authentication authentication) {
-    return vetService.getByEmail(authentication.getName());
+  public VetListResponse getMe(Authentication authentication) {
+    Vet vet = vetService.getByEmail(authentication.getName());
+
+    return VetListResponse.builder()
+        .userId(vet.getUserId())
+        .firstName(vet.getFirstName())
+        .lastName(vet.getLastName())
+        .npwz(vet.getNpwz())
+        .specialization(vet.getSpecialization())
+        .build();
   }
 
   @GetMapping("/{id}")
