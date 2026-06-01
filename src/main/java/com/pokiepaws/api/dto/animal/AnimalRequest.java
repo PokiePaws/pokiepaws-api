@@ -21,4 +21,5 @@ public class AnimalRequest {
   private Double weight;
   private LocalDate birthDate;
   private String notes;
+  private LocalDate rabiesVaccinationDate;
 }

@@ -19,6 +19,7 @@ public class LabOrderWarehouseIntegrationService {
   private final ClinicAssortmentItemRepository clinicAssortmentItemRepository;
   private final ClinicRepository clinicRepository;
   private final LabOrderRepository labOrderRepository;
+  private final RealtimeNotificationService realtimeNotificationService;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void createWarehouseOrder(Long labOrderId, Long clinicId, String testType) {
@@ -41,6 +42,7 @@ public class LabOrderWarehouseIntegrationService {
               .build();
 
       ClinicAssortmentItem saved = clinicAssortmentItemRepository.save(warehouseOrder);
+      realtimeNotificationService.publishOrderCreated(saved);
       log.info(
           "Warehouse order {} created for lab order {}. testType='{}'",
           saved.getId(),

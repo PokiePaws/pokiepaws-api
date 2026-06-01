@@ -2,6 +2,7 @@ package com.pokiepaws.api.repositories;
 
 import com.pokiepaws.api.models.Animal;
 import com.pokiepaws.api.models.Owner;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -15,4 +16,8 @@ public interface AnimalRepository extends JpaRepository<Animal, Long> {
   List<Animal> findAllByOwnerUserIdAndActiveTrue(Long ownerUserId);
 
   Optional<Animal> findByMicrochipNumber(String microchipNumber);
+
+  List<Animal>
+      findAllByActiveTrueAndRabiesVaccinationDateIsNotNullAndRabiesVaccinationReminderSentFalseAndRabiesVaccinationDateLessThanEqual(
+          LocalDate latestVaccinationDate);
 }

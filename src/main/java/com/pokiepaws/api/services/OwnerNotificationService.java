@@ -1,7 +1,9 @@
 package com.pokiepaws.api.services;
 
+import com.pokiepaws.api.models.Animal;
 import com.pokiepaws.api.models.Prescription;
 import com.pokiepaws.api.models.Visit;
+import java.time.LocalDate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionSynchronization;
@@ -53,6 +55,11 @@ public class OwnerNotificationService {
           mobilePushNotificationService.sendVisitMedicalDataUpdated(visit);
           ownerEmailNotificationService.sendVisitMedicalDataUpdated(visit);
         });
+  }
+
+  public void rabiesVaccinationReminder(Animal animal, LocalDate dueDate) {
+    sendAfterCommit(
+        () -> mobilePushNotificationService.sendRabiesVaccinationReminder(animal, dueDate));
   }
 
   private void sendAfterCommit(Runnable action) {
