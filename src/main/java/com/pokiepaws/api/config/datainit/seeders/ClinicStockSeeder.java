@@ -2,10 +2,10 @@ package com.pokiepaws.api.config.datainit.seeders;
 
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.ClinicStockItem;
-import com.pokiepaws.api.models.Product;
+import com.pokiepaws.api.models.WarehouseStockItem;
 import com.pokiepaws.api.repositories.ClinicRepository;
 import com.pokiepaws.api.repositories.ClinicStockItemRepository;
-import com.pokiepaws.api.repositories.ProductRepository;
+import com.pokiepaws.api.repositories.WarehouseStockItemRepository;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,7 +20,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ClinicStockSeeder implements Seeder {
 
   private final ClinicRepository clinicRepository;
-  private final ProductRepository productRepository;
+  private final WarehouseStockItemRepository warehouseStockItemRepository;
   private final ClinicStockItemRepository clinicStockItemRepository;
 
   @Override
@@ -33,30 +33,29 @@ public class ClinicStockSeeder implements Seeder {
   public void seed() {
     int defaultQty = 50;
 
-    List<Product> products =
-        productRepository.findAll().stream().filter(Product::isActive).toList();
+    List<WarehouseStockItem> stockItems = warehouseStockItemRepository.findAll();
     List<Clinic> clinics = clinicRepository.findAll();
 
     log.info(
-        "ClinicStockSeeder started. clinics={}, activeProducts={}, defaultQty={}",
+        "ClinicStockSeeder started. clinics={}, stockItems={}, defaultQty={}",
         clinics.size(),
-        products.size(),
+        stockItems.size(),
         defaultQty);
 
     int created = 0;
 
     for (Clinic clinic : clinics) {
-      for (Product product : products) {
+      for (WarehouseStockItem stockItem : stockItems) {
         boolean exists =
             clinicStockItemRepository
-                .findByClinicIdAndProductId(clinic.getId(), product.getId())
+                .findByClinicIdAndStockItemId(clinic.getId(), stockItem.getId())
                 .isPresent();
 
         if (!exists) {
           clinicStockItemRepository.save(
               ClinicStockItem.builder()
                   .clinic(clinic)
-                  .product(product)
+                  .stockItem(stockItem)
                   .quantityPackages(defaultQty)
                   .build());
           created++;

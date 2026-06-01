@@ -120,7 +120,7 @@ public class RealtimeNotificationService {
                 KEY_CLINIC_ID,
                 clinicId,
                 "productId",
-                stockItem.getProduct().getId(),
+                stockItem.getStockItem().getId(),
                 "quantityPackages",
                 stockItem.getQuantityPackages()));
 
