@@ -122,6 +122,20 @@ public class PrescriptionService {
   }
 
   @Transactional(readOnly = true)
+  public PrescriptionResponse getForVisitForCurrentUser(Long visitId) {
+    Visit visit = getVisit(visitId);
+    User currentUser = getCurrentUser();
+
+    if (currentUser.getRole() == Role.OWNER) {
+      prescriptionValidator.validateCurrentOwnerCanAccessPrescription(visit, currentUser);
+    } else {
+      prescriptionValidator.validateCurrentVetOrAdminCanAccessPrescription(visit, currentUser);
+    }
+
+    return getForVisit(visitId);
+  }
+
+  @Transactional(readOnly = true)
   public PrescriptionResponse getForVisitForCurrentVetOrAdmin(Long visitId) {
     Visit visit = getVisit(visitId);
     User currentUser = getCurrentUser();
