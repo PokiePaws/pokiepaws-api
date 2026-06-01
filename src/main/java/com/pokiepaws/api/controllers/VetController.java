@@ -1,6 +1,7 @@
 package com.pokiepaws.api.controllers;
 
 import com.pokiepaws.api.dto.vet.VetListResponse;
+import com.pokiepaws.api.dto.vet.VetMeResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Vet;
 import com.pokiepaws.api.services.VetService;
@@ -16,6 +17,12 @@ import org.springframework.web.bind.annotation.*;
 public class VetController {
 
   private final VetService vetService;
+
+  @GetMapping("/me")
+  @PreAuthorize("hasRole('VET')")
+  public VetMeResponse getMe() {
+    return vetService.getMe();
+  }
 
   @GetMapping
   public List<Vet> getAll() {

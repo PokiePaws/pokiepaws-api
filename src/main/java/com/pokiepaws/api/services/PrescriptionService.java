@@ -8,6 +8,7 @@ import com.pokiepaws.api.exceptions.ApiException;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.*;
 import com.pokiepaws.api.repositories.UserRepository;
+import com.pokiepaws.api.repositories.WarehouseStockItemRepository;
 import com.pokiepaws.api.validators.PrescriptionValidator;
 import java.time.Clock;
 import java.time.LocalDate;
@@ -24,7 +25,7 @@ public class PrescriptionService {
   private final Clock clock;
   private final VisitRepository visitRepository;
   private final PrescriptionRepository prescriptionRepository;
-  private final ProductRepository productRepository;
+  private final WarehouseStockItemRepository warehouseStockItemRepository;
   private final ClinicStockItemRepository clinicStockItemRepository;
   private final UserRepository userRepository;
   private final RealtimeNotificationService realtimeNotificationService;
@@ -64,31 +65,32 @@ public class PrescriptionService {
         .getItems()
         .forEach(
             i -> {
-              Product product =
-                  productRepository
+              WarehouseStockItem stockItem =
+                  warehouseStockItemRepository
                       .findById(i.getProductId())
                       .orElseThrow(
                           () ->
                               ApiException.notFound(
                                   ApiErrorMessage.PRODUCT_NOT_FOUND + i.getProductId()));
 
-              ClinicStockItem stock =
+              ClinicStockItem clinicStock =
                   clinicStockItemRepository
-                      .findByClinicIdAndProductId(clinic.getId(), product.getId())
+                      .findByClinicIdAndStockItemId(clinic.getId(), stockItem.getId())
                       .orElseThrow(
                           () ->
                               ApiException.badRequest(
                                   ApiErrorMessage.PRODUCT_NOT_AVAILABLE_IN_CLINIC_STOCK
-                                      + product.getId()));
+                                      + stockItem.getId()));
 
-              prescriptionValidator.validateStockAvailable(stock, i.getQuantityPackages());
-              stock.setQuantityPackages(stock.getQuantityPackages() - i.getQuantityPackages());
-              clinicStockItemRepository.save(stock);
-              realtimeNotificationService.publishClinicStockUpdated(stock);
+              prescriptionValidator.validateStockAvailable(clinicStock, i.getQuantityPackages());
+              clinicStock.setQuantityPackages(
+                  clinicStock.getQuantityPackages() - i.getQuantityPackages());
+              clinicStockItemRepository.save(clinicStock);
+              realtimeNotificationService.publishClinicStockUpdated(clinicStock);
 
               PrescriptionItem item =
                   PrescriptionItem.builder()
-                      .product(product)
+                      .stockItem(stockItem)
                       .quantityPackages(i.getQuantityPackages())
                       .dosage(i.getDosage())
                       .treatmentTime(i.getTreatmentTime())
@@ -158,8 +160,8 @@ public class PrescriptionService {
                     item ->
                         PrescriptionItemResponse.builder()
                             .id(item.getId())
-                            .productId(item.getProduct().getId())
-                            .productName(item.getProduct().getName())
+                            .productId(item.getStockItem().getId())
+                            .productName(item.getStockItem().getName())
                             .quantityPackages(item.getQuantityPackages())
                             .dosage(item.getDosage())
                             .treatmentTime(item.getTreatmentTime())

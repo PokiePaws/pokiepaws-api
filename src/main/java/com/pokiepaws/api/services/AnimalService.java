@@ -59,10 +59,21 @@ public class AnimalService {
 
   @Transactional(readOnly = true)
   public AnimalResponse getAnimal(Long id) {
+    var auth = SecurityContextHolder.getContext().getAuthentication();
+    boolean isVet =
+        auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_VET"));
+
     Animal animal =
-        animalRepository
-            .findByIdAndOwnerAndActiveTrue(id, getCurrentOwner())
-            .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND));
+        isVet
+            ? animalRepository
+                .findById(id)
+                .orElseThrow(
+                    () -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND))
+            : animalRepository
+                .findByIdAndOwnerAndActiveTrue(id, getCurrentOwner())
+                .orElseThrow(
+                    () -> new ResponseStatusException(HttpStatus.NOT_FOUND, ANIMAL_NOT_FOUND));
+
     return toResponse(animal);
   }
 

@@ -29,7 +29,7 @@ public class AnimalController {
   }
 
   @GetMapping("/{id}")
-  @PreAuthorize("hasRole('OWNER')")
+  @PreAuthorize("hasAnyRole('OWNER', 'VET')")
   public ResponseEntity<AnimalResponse> getAnimal(@PathVariable Long id) {
     return ResponseEntity.ok(animalService.getAnimal(id));
   }
