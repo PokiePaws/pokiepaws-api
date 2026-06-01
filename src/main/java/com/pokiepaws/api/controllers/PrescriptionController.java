@@ -25,8 +25,8 @@ public class PrescriptionController {
   }
 
   @GetMapping("/{id}/prescription")
-  @PreAuthorize("hasAnyRole('VET','ADMIN')")
+  @PreAuthorize("hasAnyRole('OWNER','VET','ADMIN')")
   public PrescriptionResponse get(@PathVariable("id") Long visitId) {
-    return prescriptionService.getForVisit(visitId);
+    return prescriptionService.getForVisitForCurrentUser(visitId);
   }
 }
