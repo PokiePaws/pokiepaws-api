@@ -42,6 +42,13 @@ public class Animal {
   @Column(columnDefinition = "TEXT")
   private String notes;
 
+  @Column(name = "rabies_vaccination_date")
+  private LocalDate rabiesVaccinationDate;
+
+  @Builder.Default
+  @Column(name = "rabies_vaccination_reminder_sent", nullable = false)
+  private boolean rabiesVaccinationReminderSent = false;
+
   @ManyToOne(fetch = FetchType.LAZY, optional = false)
   @JoinColumn(name = "owner_user_id", nullable = false)
   private Owner owner;

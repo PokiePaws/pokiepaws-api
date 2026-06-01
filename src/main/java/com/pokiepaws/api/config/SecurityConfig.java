@@ -38,6 +38,7 @@ public class SecurityConfig {
                     .requestMatchers(
                         "/error",
                         "/ws/**",
+                        "/ws-native/**",
                         "/ws-sockjs/**",
                         "/api-docs",
                         "/api-docs/**",

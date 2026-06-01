@@ -10,6 +10,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +28,7 @@ public class VisitReminderScheduler {
   private final Clock clock;
 
   @Scheduled(fixedDelayString = "${app.visit-reminders.scan-delay-ms:60000}")
+  @Transactional
   public void sendVisitReminders() {
     LocalDateTime now = LocalDateTime.now(clock);
     send24HourReminders(now);
@@ -34,8 +36,8 @@ public class VisitReminderScheduler {
   }
 
   private void send24HourReminders(LocalDateTime now) {
-    LocalDateTime from = now.plusHours(24).minusMinutes(1);
-    LocalDateTime to = now.plusHours(24).plusMinutes(1);
+    LocalDateTime from = now.plusHours(1);
+    LocalDateTime to = now.plusHours(24);
 
     List<Visit> visits =
         visitRepository
@@ -50,8 +52,8 @@ public class VisitReminderScheduler {
   }
 
   private void send1HourReminders(LocalDateTime now) {
-    LocalDateTime from = now.plusHours(1).minusMinutes(1);
-    LocalDateTime to = now.plusHours(1).plusMinutes(1);
+    LocalDateTime from = now;
+    LocalDateTime to = now.plusHours(1);
 
     List<Visit> visits =
         visitRepository.findAllByStatusInAndReminder1hSentFalseAndStartsAtBetweenOrderByStartsAtAsc(

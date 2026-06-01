@@ -7,10 +7,12 @@ import com.google.firebase.messaging.MessagingErrorCode;
 import com.google.firebase.messaging.MulticastMessage;
 import com.google.firebase.messaging.Notification;
 import com.google.firebase.messaging.SendResponse;
+import com.pokiepaws.api.models.Animal;
 import com.pokiepaws.api.models.OwnerDeviceToken;
 import com.pokiepaws.api.models.Prescription;
 import com.pokiepaws.api.models.Visit;
 import com.pokiepaws.api.repositories.OwnerDeviceTokenRepository;
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,7 @@ public class MobilePushNotificationService {
 
   private static final DateTimeFormatter VISIT_TIME_FORMATTER =
       DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm");
+  private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
   private final OwnerDeviceTokenRepository ownerDeviceTokenRepository;
 
@@ -68,6 +71,24 @@ public class MobilePushNotificationService {
         "Dane medyczne zaktualizowane",
         "Zaktualizowano dane medyczne wizyty z " + formatVisitTime(visit) + ".",
         "VISIT_MEDICAL_DATA_UPDATED");
+  }
+
+  public void sendRabiesVaccinationReminder(Animal animal, LocalDate dueDate) {
+    sendToOwner(
+        animal.getOwner().getUserId(),
+        "Przypomnienie o szczepieniu",
+        "Szczepienie przeciwko wsciekliznie dla "
+            + animal.getName()
+            + " jest wymagane do "
+            + dueDate.format(DATE_FORMATTER)
+            + ".",
+        Map.of(
+            "type",
+            "RABIES_VACCINATION_REMINDER",
+            "animalId",
+            String.valueOf(animal.getId()),
+            "dueDate",
+            dueDate.toString()));
   }
 
   private void sendVisitNotificationAfterCommit(

@@ -13,7 +13,6 @@ import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
-import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
@@ -26,7 +25,7 @@ public class ClinicAssortmentService {
   private final ClinicAssortmentItemRepository repository;
   private final ClinicRepository clinicRepository;
   private final WarehouseStockItemRepository warehouseStockItemRepository;
-  private final SimpMessagingTemplate messagingTemplate;
+  private final RealtimeNotificationService realtimeNotificationService;
 
   public List<ClinicAssortmentItemResponse> getAll(Long clinicId, String status) {
     if (clinicId != null && status != null)
@@ -58,9 +57,9 @@ public class ClinicAssortmentService {
             .expiryDate(request.getExpiryDate())
             .build();
 
-    ClinicAssortmentItemResponse response = toResponse(repository.save(item));
-    messagingTemplate.convertAndSend("/topic/orders", response);
-    return response;
+    ClinicAssortmentItem saved = repository.save(item);
+    realtimeNotificationService.publishOrderCreated(saved);
+    return toResponse(saved);
   }
 
   @Transactional
@@ -73,6 +72,7 @@ public class ClinicAssortmentService {
 
     item.setStatus(status);
     ClinicAssortmentItem saved = repository.save(item);
+    realtimeNotificationService.publishOrderStatusUpdated(saved);
 
     if ("SHIPPED".equals(status)) {
       decrementStock(item.getName(), item.getAmount());

@@ -1,6 +1,8 @@
 package com.pokiepaws.api.config;
 
 import com.pokiepaws.api.security.JwtStompChannelInterceptor;
+import java.util.Arrays;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
@@ -20,10 +22,14 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Value("${app.frontend-url}")
   private String frontendUrl;
 
+  @Value("${app.websocket.allowed-origins:${app.frontend-url}}")
+  private String websocketAllowedOrigins;
+
   @Override
   public void registerStompEndpoints(StompEndpointRegistry registry) {
-    registry.addEndpoint("/ws").setAllowedOrigins(frontendUrl).withSockJS();
-    registry.addEndpoint("/ws-native").setAllowedOrigins(frontendUrl);
+    String[] allowedOrigins = parseAllowedOrigins(websocketAllowedOrigins);
+    registry.addEndpoint("/ws").setAllowedOrigins(allowedOrigins).withSockJS();
+    registry.addEndpoint("/ws-native").setAllowedOrigins(allowedOrigins);
   }
 
   @Override
@@ -36,5 +42,19 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
   @Override
   public void configureClientInboundChannel(ChannelRegistration registration) {
     registration.interceptors(jwtStompChannelInterceptor);
+  }
+
+  private String[] parseAllowedOrigins(String origins) {
+    List<String> parsedOrigins =
+        Arrays.stream(origins.split(","))
+            .map(String::trim)
+            .filter(origin -> !origin.isBlank())
+            .toList();
+
+    if (parsedOrigins.isEmpty()) {
+      return new String[] {frontendUrl};
+    }
+
+    return parsedOrigins.toArray(String[]::new);
   }
 }

@@ -21,6 +21,7 @@ import org.springframework.web.server.ResponseStatusException;
 public class AnimalService {
 
   private static final String ANIMAL_NOT_FOUND = "Animal not found";
+  private static final int RABIES_VACCINATION_VALID_YEARS = 1;
 
   private final AnimalRepository animalRepository;
   private final OwnerRepository ownerRepository;
@@ -89,6 +90,7 @@ public class AnimalService {
             .weight(request.getWeight())
             .birthDate(request.getBirthDate())
             .notes(request.getNotes())
+            .rabiesVaccinationDate(request.getRabiesVaccinationDate())
             .owner(getCurrentOwner())
             .active(true)
             .build();
@@ -115,6 +117,7 @@ public class AnimalService {
     animal.setWeight(request.getWeight());
     animal.setBirthDate(request.getBirthDate());
     animal.setNotes(request.getNotes());
+    updateRabiesVaccinationDate(animal, request.getRabiesVaccinationDate());
 
     return toResponse(animalRepository.save(animal));
   }
@@ -148,6 +151,15 @@ public class AnimalService {
             });
   }
 
+  private void updateRabiesVaccinationDate(Animal animal, java.time.LocalDate vaccinationDate) {
+    if (java.util.Objects.equals(animal.getRabiesVaccinationDate(), vaccinationDate)) {
+      return;
+    }
+
+    animal.setRabiesVaccinationDate(vaccinationDate);
+    animal.setRabiesVaccinationReminderSent(false);
+  }
+
   private AnimalResponse toResponse(Animal animal) {
     return AnimalResponse.builder()
         .id(animal.getId())
@@ -160,6 +172,16 @@ public class AnimalService {
         .weight(animal.getWeight())
         .birthDate(animal.getBirthDate())
         .notes(animal.getNotes())
+        .rabiesVaccinationDate(animal.getRabiesVaccinationDate())
+        .rabiesVaccinationDueDate(getRabiesVaccinationDueDate(animal))
         .build();
+  }
+
+  private java.time.LocalDate getRabiesVaccinationDueDate(Animal animal) {
+    if (animal.getRabiesVaccinationDate() == null) {
+      return null;
+    }
+
+    return animal.getRabiesVaccinationDate().plusYears(RABIES_VACCINATION_VALID_YEARS);
   }
 }

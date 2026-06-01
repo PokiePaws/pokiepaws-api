@@ -3,6 +3,7 @@ package com.pokiepaws.api.services;
 import com.pokiepaws.api.dto.auth.ActivityLogResponse;
 import com.pokiepaws.api.dto.realtime.RealtimeEventType;
 import com.pokiepaws.api.dto.realtime.RealtimeNotification;
+import com.pokiepaws.api.models.ClinicAssortmentItem;
 import com.pokiepaws.api.models.ClinicStockItem;
 import com.pokiepaws.api.models.LabOrder;
 import com.pokiepaws.api.models.Prescription;
@@ -23,6 +24,7 @@ public class RealtimeNotificationService {
   private static final String USER_NOTIFICATIONS_QUEUE = "/queue/notifications";
   private static final String ADMIN_ACTIVITY_TOPIC = "/topic/admin/activity";
   private static final String TOPIC_VISITS = "visits";
+  private static final String TOPIC_ORDERS = "orders";
   private static final String KEY_CLINIC_ID = "clinicId";
   private static final String KEY_ANIMAL_ID = "animalId";
   private static final String KEY_STARTS_AT = "startsAt";
@@ -128,6 +130,58 @@ public class RealtimeNotificationService {
         () -> {
           sendToClinic(clinicId, "stock", notification);
           messagingTemplate.convertAndSend("/topic/warehouse/stock", notification);
+        });
+  }
+
+  public void publishOrderCreated(ClinicAssortmentItem order) {
+    Long clinicId = order.getClinic().getId();
+
+    RealtimeNotification notification =
+        buildNotification(
+            RealtimeEventType.ORDER_CREATED,
+            order.getId(),
+            "Order created",
+            Map.of(
+                KEY_CLINIC_ID,
+                clinicId,
+                "clinicName",
+                order.getClinic().getClinicName(),
+                "name",
+                order.getName(),
+                "amount",
+                order.getAmount(),
+                "status",
+                order.getStatus()));
+
+    sendAfterCommit(
+        () -> {
+          sendToClinic(clinicId, TOPIC_ORDERS, notification);
+          messagingTemplate.convertAndSend("/topic/warehouse/orders", notification);
+        });
+  }
+
+  public void publishOrderStatusUpdated(ClinicAssortmentItem order) {
+    Long clinicId = order.getClinic().getId();
+
+    RealtimeNotification notification =
+        buildNotification(
+            RealtimeEventType.ORDER_STATUS_UPDATED,
+            order.getId(),
+            "Order status updated",
+            Map.of(
+                KEY_CLINIC_ID,
+                clinicId,
+                "name",
+                order.getName(),
+                "amount",
+                order.getAmount(),
+                "status",
+                order.getStatus()));
+
+    sendAfterCommit(
+        () -> {
+          sendToClinic(clinicId, TOPIC_ORDERS, notification);
+          messagingTemplate.convertAndSend("/topic/warehouse/orders", notification);
         });
   }
 

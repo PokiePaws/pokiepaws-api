@@ -298,12 +298,29 @@ public class VisitService {
     visit.setDisease(req.getDisease());
     visit.setDiagnosis(req.getDiagnosis());
     visit.setRecommendations(req.getRecommendations());
+    updateRabiesVaccination(visit, req);
 
     Visit saved = visitRepository.save(visit);
     realtimeNotificationService.publishVisitMedicalDataUpdated(saved);
     ownerNotificationService.visitMedicalDataUpdated(saved);
 
     return toResponse(saved);
+  }
+
+  private void updateRabiesVaccination(Visit visit, UpdateVisitMedicalDataRequest req) {
+    if (!req.isRabiesVaccinationPerformed()) {
+      return;
+    }
+
+    LocalDate vaccinationDate =
+        req.getRabiesVaccinationDate() != null
+            ? req.getRabiesVaccinationDate()
+            : visit.getStartsAt().toLocalDate();
+
+    Animal animal = visit.getAnimal();
+    animal.setRabiesVaccinationDate(vaccinationDate);
+    animal.setRabiesVaccinationReminderSent(false);
+    animalRepository.save(animal);
   }
 
   static VisitResponse toResponse(Visit v) {
