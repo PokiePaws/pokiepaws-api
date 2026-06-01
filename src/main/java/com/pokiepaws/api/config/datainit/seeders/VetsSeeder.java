@@ -46,7 +46,7 @@ public class VetsSeeder implements Seeder {
   public void seed() {
     createVetIfMissing(
         VetSeedDto.builder()
-            .email("vet1@pokiepaws.pl")
+            .email("pokiepaws.vet1@protonmail.com")
             .password(defaultVetPassword)
             .firstName("Marta")
             .lastName("Robaczek")
