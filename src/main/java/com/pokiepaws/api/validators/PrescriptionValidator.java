@@ -32,8 +32,8 @@ public class PrescriptionValidator {
   public void validateStockAvailable(ClinicStockItem stock, int requestedQuantity) {
     if (stock.getQuantityPackages() < requestedQuantity) {
       throw ApiException.badRequest(
-          "Not enough stock for productId="
-              + stock.getProduct().getId()
+          "Not enough stock for stockItemId="
+              + stock.getStockItem().getId()
               + " (available="
               + stock.getQuantityPackages()
               + ", requested="

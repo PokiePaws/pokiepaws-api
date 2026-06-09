@@ -21,8 +21,8 @@ public class PrescriptionItem {
   private Prescription prescription;
 
   @ManyToOne(optional = false, fetch = FetchType.LAZY)
-  @JoinColumn(name = "product_id", nullable = false)
-  private Product product;
+  @JoinColumn(name = "stock_item_id", nullable = false)
+  private WarehouseStockItem stockItem;
 
   @Column(name = "quantity_packages", nullable = false)
   private int quantityPackages;

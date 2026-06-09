@@ -1,7 +1,7 @@
 package com.pokiepaws.api.controllers;
 
 import com.pokiepaws.api.config.OpenApiConfig;
-import com.pokiepaws.api.repositories.ProductRepository;
+import com.pokiepaws.api.repositories.WarehouseStockItemRepository;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 @RequiredArgsConstructor
 public class ProductController {
 
-  private final ProductRepository productRepository;
+  private final WarehouseStockItemRepository warehouseStockItemRepository;
 
   @GetMapping
   @PreAuthorize("hasAnyRole('VET', 'ADMIN')")
   public ResponseEntity<List<ProductResponse>> getProducts() {
     List<ProductResponse> products =
-        productRepository.findAllByActiveTrueOrderByName().stream()
+        warehouseStockItemRepository.findAll().stream()
             .map(p -> new ProductResponse(p.getId(), p.getName(), p.getUnit()))
             .toList();
     return ResponseEntity.ok(products);

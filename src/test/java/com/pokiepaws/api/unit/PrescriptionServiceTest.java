@@ -10,9 +10,9 @@ import com.pokiepaws.api.dto.prescription.PrescriptionItemRequest;
 import com.pokiepaws.api.models.*;
 import com.pokiepaws.api.repositories.ClinicStockItemRepository;
 import com.pokiepaws.api.repositories.PrescriptionRepository;
-import com.pokiepaws.api.repositories.ProductRepository;
 import com.pokiepaws.api.repositories.UserRepository;
 import com.pokiepaws.api.repositories.VisitRepository;
+import com.pokiepaws.api.repositories.WarehouseStockItemRepository;
 import com.pokiepaws.api.services.OwnerNotificationService;
 import com.pokiepaws.api.services.PrescriptionService;
 import com.pokiepaws.api.services.RealtimeNotificationService;
@@ -42,7 +42,7 @@ class PrescriptionServiceTest {
 
   @Mock VisitRepository visitRepository;
   @Mock PrescriptionRepository prescriptionRepository;
-  @Mock ProductRepository productRepository;
+  @Mock WarehouseStockItemRepository warehouseStockItemRepository;
   @Mock ClinicStockItemRepository clinicStockItemRepository;
   @Mock UserRepository userRepository;
   @Mock RealtimeNotificationService realtimeNotificationService;
@@ -52,7 +52,7 @@ class PrescriptionServiceTest {
   private Clinic clinic;
   private Vet vet;
   private Visit visit;
-  private Product product;
+  private WarehouseStockItem stockItem;
   private ClinicStockItem stock;
 
   @BeforeEach
@@ -64,7 +64,7 @@ class PrescriptionServiceTest {
             clock,
             visitRepository,
             prescriptionRepository,
-            productRepository,
+            warehouseStockItemRepository,
             clinicStockItemRepository,
             userRepository,
             realtimeNotificationService,
@@ -93,12 +93,13 @@ class PrescriptionServiceTest {
             .endsAt(LocalDateTime.of(2026, 5, 11, 10, 30))
             .status(VisitStatus.SCHEDULED)
             .build();
-    product = Product.builder().id(70L).name("Antibiotic").unit("package").active(true).build();
+    stockItem =
+        WarehouseStockItem.builder().id(70L).name("Antibiotic").unit("package").amount(100).build();
     stock =
         ClinicStockItem.builder()
             .id(80L)
             .clinic(clinic)
-            .product(product)
+            .stockItem(stockItem)
             .quantityPackages(5)
             .build();
   }
@@ -117,8 +118,8 @@ class PrescriptionServiceTest {
     when(visitRepository.findById(50L)).thenReturn(Optional.of(visit));
     when(prescriptionRepository.existsByVisitId(50L)).thenReturn(false);
     when(userRepository.findByEmail("vet@pokiepaws.pl")).thenReturn(Optional.of(currentVet));
-    when(productRepository.findById(70L)).thenReturn(Optional.of(product));
-    when(clinicStockItemRepository.findByClinicIdAndProductId(30L, 70L))
+    when(warehouseStockItemRepository.findById(70L)).thenReturn(Optional.of(stockItem));
+    when(clinicStockItemRepository.findByClinicIdAndStockItemId(30L, 70L))
         .thenReturn(Optional.of(stock));
     when(prescriptionRepository.save(any(Prescription.class)))
         .thenAnswer(
@@ -230,8 +231,8 @@ class PrescriptionServiceTest {
     when(visitRepository.findById(50L)).thenReturn(Optional.of(visit));
     when(prescriptionRepository.existsByVisitId(50L)).thenReturn(false);
     when(userRepository.findByEmail("vet@pokiepaws.pl")).thenReturn(Optional.of(currentVet));
-    when(productRepository.findById(70L)).thenReturn(Optional.of(product));
-    when(clinicStockItemRepository.findByClinicIdAndProductId(30L, 70L))
+    when(warehouseStockItemRepository.findById(70L)).thenReturn(Optional.of(stockItem));
+    when(clinicStockItemRepository.findByClinicIdAndStockItemId(30L, 70L))
         .thenReturn(Optional.of(stock));
 
     assertThatThrownBy(() -> prescriptionService.createForVisit(50L, request))
@@ -240,7 +241,7 @@ class PrescriptionServiceTest {
             ex -> {
               ResponseStatusException rse = (ResponseStatusException) ex;
               assertThat(rse.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-              assertThat(rse.getReason()).contains("Not enough stock for productId=70");
+              assertThat(rse.getReason()).contains("Not enough stock for stockItemId=70");
             });
   }
 
@@ -253,7 +254,7 @@ class PrescriptionServiceTest {
     when(visitRepository.findById(50L)).thenReturn(Optional.of(visit));
     when(prescriptionRepository.existsByVisitId(50L)).thenReturn(false);
     when(userRepository.findByEmail("vet@pokiepaws.pl")).thenReturn(Optional.of(currentVet));
-    when(productRepository.findById(70L)).thenReturn(Optional.empty());
+    when(warehouseStockItemRepository.findById(70L)).thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> prescriptionService.createForVisit(50L, request))
         .isInstanceOf(ResponseStatusException.class)
@@ -277,8 +278,8 @@ class PrescriptionServiceTest {
     when(visitRepository.findById(50L)).thenReturn(Optional.of(visit));
     when(prescriptionRepository.existsByVisitId(50L)).thenReturn(false);
     when(userRepository.findByEmail("vet@pokiepaws.pl")).thenReturn(Optional.of(currentVet));
-    when(productRepository.findById(70L)).thenReturn(Optional.of(product));
-    when(clinicStockItemRepository.findByClinicIdAndProductId(30L, 70L))
+    when(warehouseStockItemRepository.findById(70L)).thenReturn(Optional.of(stockItem));
+    when(clinicStockItemRepository.findByClinicIdAndStockItemId(30L, 70L))
         .thenReturn(Optional.empty());
 
     assertThatThrownBy(() -> prescriptionService.createForVisit(50L, request))
@@ -390,7 +391,7 @@ class PrescriptionServiceTest {
     prescription.addItem(
         com.pokiepaws.api.models.PrescriptionItem.builder()
             .id(91L)
-            .product(product)
+            .stockItem(stockItem)
             .quantityPackages(1)
             .dosage("1 tablet every 12h")
             .treatmentTime("7 days")

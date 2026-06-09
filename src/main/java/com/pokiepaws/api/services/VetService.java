@@ -1,6 +1,7 @@
 package com.pokiepaws.api.services;
 
 import com.pokiepaws.api.dto.vet.VetListResponse;
+import com.pokiepaws.api.dto.vet.VetMeResponse;
 import com.pokiepaws.api.dto.vet.VetRequest;
 import com.pokiepaws.api.models.Clinic;
 import com.pokiepaws.api.models.User;
@@ -12,6 +13,7 @@ import jakarta.persistence.EntityNotFoundException;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +25,25 @@ public class VetService {
   private final VetRepository vetRepository;
   private final ClinicRepository clinicRepository;
   private final UserRepository userRepository;
+
+  @Transactional(readOnly = true)
+  public VetMeResponse getMe() {
+    String email = SecurityContextHolder.getContext().getAuthentication().getName();
+    Vet vet =
+        vetRepository
+            .findByUserEmail(email)
+            .orElseThrow(() -> new EntityNotFoundException("Vet profile not found"));
+    return VetMeResponse.builder()
+        .userId(vet.getUserId())
+        .firstName(vet.getFirstName())
+        .lastName(vet.getLastName())
+        .phone(vet.getPhone())
+        .npwz(vet.getNpwz())
+        .specialization(vet.getSpecialization())
+        .clinicId(vet.getClinic() != null ? vet.getClinic().getId() : null)
+        .clinicName(vet.getClinic() != null ? vet.getClinic().getClinicName() : null)
+        .build();
+  }
 
   public List<Vet> getAll() {
     return vetRepository.findAll();
